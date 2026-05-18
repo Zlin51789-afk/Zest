@@ -13,7 +13,8 @@ import {
   listDocuments,
   resolveDocumentPath,
 } from './context.js';
-import { checkOpenClawHealth, getGatewayUrl, isOpenClawConfigured } from './openclaw.js';
+import { checkAiHealth } from './llm.js';
+import { isOpenClawConfigured } from './openclaw.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -89,18 +90,17 @@ export async function createApp() {
   });
 
   app.get('/api/openclaw/status', async (_req, res) => {
-    if (!isOpenClawConfigured()) {
+    const hasMoonshot = Boolean(process.env.MOONSHOT_API_KEY);
+    if (!isOpenClawConfigured() && !hasMoonshot) {
       return res.json({
         ok: false,
         configured: false,
-        url: getGatewayUrl(),
-        error: '??? Gateway Token',
+        error: '??? AI?MOONSHOT_API_KEY ? OpenClaw?',
       });
     }
-    const health = await checkOpenClawHealth();
+    const health = await checkAiHealth();
     res.json({
       configured: true,
-      url: getGatewayUrl(),
       ...health,
     });
   });

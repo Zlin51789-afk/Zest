@@ -266,10 +266,13 @@ async function refreshOpenClawStatus() {
 
     if (data.ok) {
       footer.classList.add('connected');
-      textEl.textContent = 'OpenClaw 已连接';
+      textEl.textContent =
+        data.backend === 'moonshot'
+          ? `Kimi 已连接 (${data.model || 'moonshot'})`
+          : 'OpenClaw 已连接';
     } else {
       footer.classList.add('error');
-      textEl.textContent = data.error || 'OpenClaw 未连接';
+      textEl.textContent = data.error || 'AI 未连接';
     }
   } catch {
     footer.classList.add('error');

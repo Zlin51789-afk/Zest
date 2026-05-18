@@ -9,7 +9,8 @@ import {
   matchDocuments,
   SYSTEM_PROMPTS,
 } from './context.js';
-import { chatWithOpenClaw, isOpenClawConfigured } from './openclaw.js';
+import { chatWithAI } from './llm.js';
+import { isOpenClawConfigured } from './openclaw.js';
 
 function sessionUser(agentId) {
   return `web2:${agentId}`;
@@ -51,7 +52,7 @@ async function runOpenClawAgent(agentId, message, { history = [] } = {}) {
 
         let aiText = '';
         try {
-          aiText = await chatWithOpenClaw({
+          aiText = await chatWithAI({
             sessionUser: sessionUser(agentId),
             systemPrompt,
             history: toHistory(history),
@@ -88,7 +89,7 @@ async function runOpenClawAgent(agentId, message, { history = [] } = {}) {
       systemPrompt = SYSTEM_PROMPTS.general();
   }
 
-  const text = await chatWithOpenClaw({
+  const text = await chatWithAI({
     sessionUser: sessionUser(agentId),
     systemPrompt,
     history: toHistory(history),
@@ -99,9 +100,10 @@ async function runOpenClawAgent(agentId, message, { history = [] } = {}) {
 }
 
 export async function handleAgent(agentId, message, options = {}) {
-  if (!isOpenClawConfigured()) {
+  const hasMoonshot = Boolean(process.env.MOONSHOT_API_KEY);
+  if (!isOpenClawConfigured() && !hasMoonshot) {
     throw new Error(
-      'OpenClaw 未配置。请启动 Gateway 并设置 OPENCLAW_GATEWAY_TOKEN，或确保 ~/.openclaw/openclaw.json 存在。'
+      'AI 未配置。云端请设置 MOONSHOT_API_KEY；本地请启动 OpenClaw Gateway。'
     );
   }
 
