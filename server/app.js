@@ -17,11 +17,10 @@ import { checkAiHealth } from './llm.js';
 import { isOpenClawConfigured } from './openclaw.js';
 import {
   AUTH_COOKIE,
-  AUTH_PASS,
-  AUTH_USER,
   cookieOptions,
   createLoginSession,
   getSessionTokenFromRequest,
+  validateCredentials,
   validateSessionToken,
 } from './authSession.js';
 
@@ -42,10 +41,10 @@ export async function createApp() {
 
   app.post('/api/auth/login', async (req, res) => {
     const { username, password } = req.body || {};
-    if (username !== AUTH_USER || password !== AUTH_PASS) {
+    if (!validateCredentials(username, password)) {
       return res.status(401).json({ error: '???????????' });
     }
-    const token = await createLoginSession();
+    const token = await createLoginSession(username);
     res.cookie(AUTH_COOKIE, token, cookieOptions());
     res.json({ ok: true });
   });
