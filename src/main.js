@@ -202,6 +202,20 @@ function buildHistory(session) {
   }));
 }
 
+function formatChatError(err) {
+  const raw = err?.message ? String(err.message) : '未知错误';
+  // 登录 / 会话失效（authFetch 抛出）不再套「OpenClaw」话术
+  if (/登录|过期|失效|SESSION|设备|账号/i.test(raw)) {
+    return raw;
+  }
+  const host = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isLocal = host === 'localhost' || host === '127.0.0.1';
+  if (isLocal) {
+    return `暂时无法获取回复：${raw}\n\n若使用本机 OpenClaw，请确认 Gateway 已启动（openclaw gateway status），并已启用 chatCompletions 端点。`;
+  }
+  return `暂时无法获取回复：${raw}\n\n线上使用云端 AI（Kimi / Moonshot）。若持续失败，请检查网络，或联系管理员检查 Vercel 环境变量（如 MOONSHOT_API_KEY）。`;
+}
+
 async function sendMessage() {
   const text = messageInput.value.trim();
   if (!text || !currentAgentId) return;
@@ -246,7 +260,7 @@ async function sendMessage() {
   } catch (err) {
     session.messages.push({
       role: 'assistant',
-      text: `OpenClaw 暂时不可用：${err.message || '未知错误'}\n\n请确认 Gateway 已启动（openclaw gateway status），并已启用 chatCompletions 端点。`,
+      text: formatChatError(err),
       attachments: [],
       timestamp: Date.now(),
     });
