@@ -1,3 +1,5 @@
+import { initAuth } from './auth.js';
+
 const ICONS = {
   document: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15h6"/></svg>`,
   qa: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>`,
@@ -347,6 +349,8 @@ fileInput.addEventListener('change', async () => {
   updatePendingFilesUI();
 });
 
-loadAgents();
-refreshOpenClawStatus();
-setInterval(refreshOpenClawStatus, 15000);
+initAuth(() => {
+  loadAgents();
+  refreshOpenClawStatus();
+  setInterval(refreshOpenClawStatus, 15000);
+});

@@ -7,7 +7,41 @@
     <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
-    <div class="app">
+    <div id="loginScreen" class="login-screen" role="dialog" aria-labelledby="loginTitle">
+      <div class="login-card">
+        <div class="logo" aria-hidden="true"></div>
+        <h1 id="loginTitle" class="brand">智能助手</h1>
+        <p class="login-subtitle">请登录后使用</p>
+        <form id="loginForm" class="login-form" novalidate>
+          <label class="login-field">
+            <span class="login-label">账号</span>
+            <input
+              type="text"
+              id="loginUser"
+              name="username"
+              class="login-input"
+              autocomplete="username"
+              required
+            />
+          </label>
+          <label class="login-field">
+            <span class="login-label">密码</span>
+            <input
+              type="password"
+              id="loginPass"
+              name="password"
+              class="login-input"
+              autocomplete="current-password"
+              required
+            />
+          </label>
+          <p id="loginError" class="login-error" role="alert" hidden></p>
+          <button type="submit" class="login-btn">登录</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="app" id="app" hidden>
       <aside class="sidebar" aria-label="功能选择">
         <header class="sidebar-header">
           <div class="logo" aria-hidden="true"></div>
