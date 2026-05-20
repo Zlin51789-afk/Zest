@@ -219,11 +219,11 @@ export async function createApp() {
     const { message, history = [] } = req.body;
 
     if (!message?.trim()) {
-      return res.status(400).json({ error: '??????' });
+      return res.status(400).json({ error: '\u6d88\u606f\u4e0d\u80fd\u4e3a\u7a7a' });
     }
 
     if (!AGENTS[agentId]) {
-      return res.status(404).json({ error: '?????' });
+      return res.status(404).json({ error: '\u672a\u77e5\u667a\u80fd\u4f53' });
     }
 
     try {
@@ -238,8 +238,10 @@ export async function createApp() {
     } catch (err) {
       console.error('[openclaw]', err.message);
       res.status(502).json({
-        error: err.message || 'OpenClaw ???????',
-        hint: '?????? openclaw gateway????? chatCompletions ??',
+        error:
+          err.message ||
+          '\u804a\u5929\u670d\u52a1\u6682\u65f6\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002',
+        hint: '\u82e5\u5728 Vercel \u90e8\u7f72\uff0c\u8bf7\u786e\u8ba4\u5df2\u914d\u7f6e MOONSHOT_API_KEY\uff08\u53ca\u53ef\u9009 MOONSHOT_MODEL\uff09\u5e76\u91cd\u65b0\u90e8\u7f72\u3002',
       });
     }
   });

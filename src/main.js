@@ -204,7 +204,7 @@ function buildHistory(session) {
 
 function formatChatError(err) {
   const raw = err?.message ? String(err.message) : '未知错误';
-  // 登录 / 会话失效（authFetch 抛出）不再套「OpenClaw」话术
+  // 登录 / 会话失效（authFetch 抛出）不再套额外说明
   if (/登录|过期|失效|SESSION|设备|账号/i.test(raw)) {
     return raw;
   }
@@ -213,7 +213,8 @@ function formatChatError(err) {
   if (isLocal) {
     return `暂时无法获取回复：${raw}\n\n若使用本机 OpenClaw，请确认 Gateway 已启动（openclaw gateway status），并已启用 chatCompletions 端点。`;
   }
-  return `暂时无法获取回复：${raw}\n\n线上使用云端 AI（Kimi / Moonshot）。若持续失败，请检查网络，或联系管理员检查 Vercel 环境变量（如 MOONSHOT_API_KEY）。`;
+  // 线上错误由服务端写明原因（含 hint）；不再追加固定「检查 Vercel」长段
+  return `暂时无法获取回复：${raw}`;
 }
 
 async function sendMessage() {
@@ -248,7 +249,8 @@ async function sendMessage() {
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-      throw new Error(data.error || '请求失败');
+      const parts = [data.error, data.hint].filter(Boolean);
+      throw new Error(parts.join('\n') || '\u8bf7\u6c42\u5931\u8d25');
     }
 
     session.messages.push({
