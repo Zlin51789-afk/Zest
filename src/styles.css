@@ -724,6 +724,51 @@ body {
   color: var(--text-secondary);
 }
 
+
+.login-password-wrap {
+  position: relative;
+  display: block;
+}
+
+.login-password-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.login-password-toggle:hover {
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.login-password-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.login-password-toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-password-toggle-icon[hidden] {
+  display: none;
+}
+
 .login-input {
   width: 100%;
   padding: 12px 14px;
@@ -740,6 +785,10 @@ body {
 .login-input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+}
+
+.login-input.login-input--password {
+  padding: 12px 44px 12px 14px;
 }
 
 .login-error {

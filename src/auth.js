@@ -181,6 +181,23 @@ export function initAuth(onSuccess) {
   }
 
   const submitBtn = form.querySelector('button[type="submit"]');
+  const passToggle = document.getElementById('loginPassToggle');
+  const passIconHidden = passToggle?.querySelector('[data-when="hidden"]');
+  const passIconVisible = passToggle?.querySelector('[data-when="visible"]');
+
+  if (passToggle && passInput && passIconHidden && passIconVisible) {
+    passToggle.addEventListener('click', () => {
+      const reveal = passInput.type === 'password';
+      passInput.type = reveal ? 'text' : 'password';
+      passIconHidden.hidden = reveal;
+      passIconVisible.hidden = !reveal;
+      passToggle.setAttribute('aria-pressed', String(reveal));
+      passToggle.setAttribute(
+        'aria-label',
+        reveal ? '????' : '????'
+      );
+    });
+  }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -204,6 +221,13 @@ export function initAuth(onSuccess) {
         errorEl.textContent = userFacingApiError(data, LOGIN_ERROR);
         errorEl.hidden = false;
         passInput.value = '';
+        passInput.type = 'password';
+        if (passToggle && passIconHidden && passIconVisible) {
+          passIconHidden.hidden = false;
+          passIconVisible.hidden = true;
+          passToggle.setAttribute('aria-pressed', 'false');
+          passToggle.setAttribute('aria-label', '????');
+        }
         passInput.focus();
         return;
       }
