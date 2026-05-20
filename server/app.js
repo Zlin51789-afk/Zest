@@ -15,6 +15,15 @@ import {
 } from './context.js';
 import { checkAiHealth } from './llm.js';
 import { isOpenClawConfigured } from './openclaw.js';
+import {
+  AUTH_COOKIE,
+  AUTH_PASS,
+  AUTH_USER,
+  cookieOptions,
+  createLoginSession,
+  getSessionTokenFromRequest,
+  validateSessionToken,
+} from './authSession.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -27,9 +36,47 @@ export async function createApp() {
   const app = express();
   const upload = multer({ dest: UPLOAD_DIR });
 
-  app.use(cors());
+  app.use(cors({ origin: true, credentials: true }));
   app.use(express.json());
   app.use('/downloads', express.static(DOCS_DIR));
+
+  app.post('/api/auth/login', async (req, res) => {
+    const { username, password } = req.body || {};
+    if (username !== AUTH_USER || password !== AUTH_PASS) {
+      return res.status(401).json({ error: '???????????' });
+    }
+    const token = await createLoginSession();
+    res.cookie(AUTH_COOKIE, token, cookieOptions());
+    res.json({ ok: true });
+  });
+
+  app.get('/api/auth/session', async (req, res) => {
+    const token = getSessionTokenFromRequest(req);
+    if (await validateSessionToken(token)) {
+      return res.json({ ok: true });
+    }
+    res.clearCookie(AUTH_COOKIE, cookieOptions());
+    res.status(401).json({
+      error: 'SESSION_INVALID',
+      message: '??????????????????????',
+    });
+  });
+
+  app.post('/api/auth/logout', (_req, res) => {
+    res.clearCookie(AUTH_COOKIE, cookieOptions());
+    res.json({ ok: true });
+  });
+
+  app.use(async (req, res, next) => {
+    if (!req.path.startsWith('/api/')) return next();
+    const token = getSessionTokenFromRequest(req);
+    if (await validateSessionToken(token)) return next();
+    res.clearCookie(AUTH_COOKIE, cookieOptions());
+    res.status(401).json({
+      error: 'SESSION_INVALID',
+      message: '??????????????????????',
+    });
+  });
 
   app.get('/api/agents', (_req, res) => {
     const list = Object.values(AGENTS).map(({ id, name, subtitle }) => ({

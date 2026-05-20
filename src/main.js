@@ -1,4 +1,4 @@
-import { initAuth } from './auth.js';
+import { authFetch, initAuth } from './auth.js';
 
 const ICONS = {
   document: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15h6"/></svg>`,
@@ -225,7 +225,7 @@ async function sendMessage() {
   const history = buildHistory(session).slice(0, -1);
 
   try {
-    const res = await fetch(`/api/chat/${currentAgentId}`, {
+    const res = await authFetch(`/api/chat/${currentAgentId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: text, history }),
@@ -262,7 +262,7 @@ async function refreshOpenClawStatus() {
   if (!footer || !textEl) return;
 
   try {
-    const res = await fetch('/api/openclaw/status');
+    const res = await authFetch('/api/openclaw/status');
     const data = await res.json();
     footer.classList.remove('connected', 'error');
 
@@ -300,7 +300,7 @@ function updatePendingFilesUI() {
 
 async function loadAgents() {
   try {
-    const res = await fetch('/api/agents');
+    const res = await authFetch('/api/agents');
     agents = await res.json();
   } catch {
     agents = [
@@ -340,7 +340,7 @@ fileInput.addEventListener('change', async () => {
     const form = new FormData();
     form.append('file', file);
     try {
-      await fetch('/api/upload', { method: 'POST', body: form });
+      await authFetch('/api/upload', { method: 'POST', body: form });
       pendingFiles.push(file);
     } catch {
       pendingFiles.push(file);

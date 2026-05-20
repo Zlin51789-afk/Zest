@@ -1,14 +1,44 @@
-/** ????????????? */
-const AUTH_USER = '123123';
-const AUTH_PASS = '123123';
-const AUTH_STORAGE_KEY = 'chipgo_authenticated';
+const LOGIN_ERROR = '???????????';
+const SESSION_ERROR = '??????????????????????';
 
-export function isAuthenticated() {
+export function showLoginScreen() {
+  document.getElementById('loginScreen').hidden = false;
+  document.getElementById('app').hidden = true;
+}
+
+export function showAppScreen() {
+  document.getElementById('loginScreen').hidden = true;
+  document.getElementById('app').hidden = false;
+}
+
+export async function checkSession() {
   try {
-    return localStorage.getItem(AUTH_STORAGE_KEY) === '1';
+    const res = await fetch('/api/auth/session', { credentials: 'include' });
+    return res.ok;
   } catch {
     return false;
   }
+}
+
+/** ??? Cookie ????401 ?????? */
+export async function authFetch(url, options = {}) {
+  const res = await fetch(url, {
+    ...options,
+    credentials: 'include',
+  });
+
+  if (res.status === 401) {
+    const data = await res.json().catch(() => ({}));
+    showLoginScreen();
+    const errorEl = document.getElementById('loginError');
+    if (errorEl) {
+      errorEl.textContent = data.message || SESSION_ERROR;
+      errorEl.hidden = false;
+    }
+    throw new Error(data.message || SESSION_ERROR);
+  }
+
+  return res;
 }
 
 export function initAuth(onSuccess) {
@@ -19,43 +49,53 @@ export function initAuth(onSuccess) {
   const userInput = document.getElementById('loginUser');
   const passInput = document.getElementById('loginPass');
 
-  function showApp() {
-    loginScreen.hidden = true;
-    app.hidden = false;
+  async function enterApp() {
+    showAppScreen();
     onSuccess();
   }
 
-  function showError() {
-    errorEl.textContent = '???????????';
-    errorEl.hidden = false;
-    passInput.value = '';
-    passInput.focus();
+  async function tryRestoreSession() {
+    if (await checkSession()) {
+      await enterApp();
+      return true;
+    }
+    showLoginScreen();
+    return false;
   }
 
-  if (isAuthenticated()) {
-    showApp();
-    return;
-  }
-
-  loginScreen.hidden = false;
-  app.hidden = true;
-
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
     errorEl.hidden = true;
 
-    const user = userInput.value.trim();
-    const pass = passInput.value;
+    const username = userInput.value.trim();
+    const password = passInput.value;
 
-    if (user === AUTH_USER && pass === AUTH_PASS) {
-      try {
-        localStorage.setItem(AUTH_STORAGE_KEY, '1');
-      } catch {
-        /* ??????????????????? */
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        errorEl.textContent = data.error || LOGIN_ERROR;
+        errorEl.hidden = false;
+        passInput.value = '';
+        passInput.focus();
+        return;
       }
-      showApp();
-    } else {
-      showError();
+
+      await enterApp();
+    } catch {
+      errorEl.textContent = '??????????';
+      errorEl.hidden = false;
     }
   });
+
+  loginScreen.hidden = false;
+  app.hidden = true;
+  tryRestoreSession();
 }
