@@ -42,8 +42,8 @@ export async function validateCredentials(username, password) {
 export async function getLoginFailureMessage(username, password) {
   const result = await validateAccountLogin(username, password);
   if (result.ok) return null;
-  if (result.reason === 'expired') return '??????????????';
-  return '???????????';
+  if (result.reason === 'expired') return '账号已过期，请联系管理员续期';
+  return '账号或密码错误，请重试';
 }
 
 export async function createLoginSession(username) {

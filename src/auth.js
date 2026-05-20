@@ -66,10 +66,10 @@ export async function authFetch(url, options = {}) {
     showLoginScreen();
     const errorEl = document.getElementById('loginError');
     if (errorEl) {
-      errorEl.textContent = data.message || SESSION_ERROR;
+      errorEl.textContent = data.error || data.message || SESSION_ERROR;
       errorEl.hidden = false;
     }
-    throw new Error(data.message || SESSION_ERROR);
+    throw new Error(data.message || data.error || SESSION_ERROR);
   }
 
   return res;
