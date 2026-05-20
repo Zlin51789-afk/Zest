@@ -43,6 +43,28 @@
 
     <div class="app" id="app" hidden>
       <aside class="sidebar" aria-label="功能选择">
+        <div class="sidebar-account">
+          <button
+            type="button"
+            id="userAvatarBtn"
+            class="user-avatar-btn"
+            aria-label="账户菜单"
+            aria-haspopup="menu"
+            aria-expanded="false"
+          >
+            <span class="user-avatar-icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+          </button>
+          <div id="userMenu" class="user-menu" role="menu" hidden>
+            <button type="button" id="logoutBtn" class="user-menu-item" role="menuitem">
+              退出登录
+            </button>
+          </div>
+        </div>
         <header class="sidebar-header">
           <div class="logo" aria-hidden="true"></div>
           <h1 class="brand">智能助手</h1>

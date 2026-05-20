@@ -1,4 +1,4 @@
-import { authFetch, initAuth } from './auth.js';
+import { authFetch, initAuth, logout } from './auth.js';
 
 const ICONS = {
   document: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15h6"/></svg>`,
@@ -349,7 +349,45 @@ fileInput.addEventListener('change', async () => {
   updatePendingFilesUI();
 });
 
+function initUserMenu() {
+  const btn = document.getElementById('userAvatarBtn');
+  const menu = document.getElementById('userMenu');
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (!btn || !menu || !logoutBtn) return;
+
+  function closeMenu() {
+    menu.hidden = true;
+    btn.setAttribute('aria-expanded', 'false');
+  }
+
+  function openMenu() {
+    menu.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
+  }
+
+  function toggleMenu() {
+    if (menu.hidden) openMenu();
+    else closeMenu();
+  }
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleMenu();
+  });
+
+  logoutBtn.addEventListener('click', async () => {
+    closeMenu();
+    await logout();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (btn.contains(e.target) || menu.contains(e.target)) return;
+    closeMenu();
+  });
+}
+
 initAuth(() => {
+  initUserMenu();
   loadAgents();
   refreshOpenClawStatus();
   setInterval(refreshOpenClawStatus, 15000);

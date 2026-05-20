@@ -1,5 +1,6 @@
-const LOGIN_ERROR = '账号或密码错误，请重试';
-const SESSION_ERROR = '登录已失效或账号已过期，请重新登录';
+const LOGIN_ERROR = '\u8d26\u53f7\u6216\u5bc6\u7801\u9519\u8bef\uff0c\u8bf7\u91cd\u8bd5';
+const SESSION_ERROR =
+  '\u767b\u5f55\u5df2\u5931\u6548\u6216\u8d26\u53f7\u5df2\u8fc7\u671f\uff0c\u8bf7\u91cd\u65b0\u767b\u5f55';
 const BROWSER_SESSION_KEY = 'chipgo_browser_active';
 
 export function showLoginScreen() {
@@ -42,6 +43,15 @@ async function clearServerSession() {
   } catch {
     /* ignore */
   }
+}
+
+/** ??????? Cookie ??????????? */
+export async function logout() {
+  clearBrowserSession();
+  await clearServerSession();
+  const errEl = document.getElementById('loginError');
+  if (errEl) errEl.hidden = true;
+  showLoginScreen();
 }
 
 export async function checkSession() {
@@ -142,7 +152,8 @@ export function initAuth(onSuccess) {
 
       await enterApp();
     } catch {
-      errorEl.textContent = '网络异常，请稍后重试';
+      errorEl.textContent =
+        '\u7f51\u7edc\u5f02\u5e38\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5';
       errorEl.hidden = false;
     }
   });

@@ -4,7 +4,7 @@ import { isAccountActive, validateAccountLogin } from './authAccounts.js';
 export const AUTH_COOKIE = 'chipgo_session';
 const AUTH_SECRET =
   process.env.AUTH_SECRET || 'chipgo-session-secret-change-in-production';
-/** ????? Cookie ???????????????? sessionStorage ??? */
+/** ?? Cookie ?????????????? sessionStorage ??? */
 const TOKEN_MAX_AGE_MS = 12 * 60 * 60 * 1000;
 
 function sign(payloadB64) {
@@ -42,8 +42,10 @@ export async function validateCredentials(username, password) {
 export async function getLoginFailureMessage(username, password) {
   const result = await validateAccountLogin(username, password);
   if (result.ok) return null;
-  if (result.reason === 'expired') return '账号已过期，请联系管理员续期';
-  return '账号或密码错误，请重试';
+  if (result.reason === 'expired') {
+    return '\u8d26\u53f7\u5df2\u8fc7\u671f\uff0c\u8bf7\u8054\u7cfb\u7ba1\u7406\u5458\u7eed\u671f';
+  }
+  return '\u8d26\u53f7\u6216\u5bc6\u7801\u9519\u8bef\uff0c\u8bf7\u91cd\u8bd5';
 }
 
 export async function createLoginSession(username) {

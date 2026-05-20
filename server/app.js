@@ -118,6 +118,13 @@ export async function createApp() {
   app.use(async (req, res, next) => {
     if (!req.path.startsWith('/api/')) return next();
     if (req.path.startsWith('/api/auth/admin/')) return next();
+    if (
+      req.path === '/api/auth/login' ||
+      req.path === '/api/auth/session' ||
+      req.path === '/api/auth/logout'
+    ) {
+      return next();
+    }
     const token = getSessionTokenFromRequest(req);
     if (await validateSessionToken(token)) return next();
     res.clearCookie(AUTH_COOKIE, cookieOptions());

@@ -59,6 +59,83 @@ body {
   padding: 0 8px 32px;
 }
 
+/* 左上角账户头像与菜单 */
+.sidebar-account {
+  position: relative;
+  padding: 0 8px 16px;
+}
+
+.user-avatar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background var(--transition),
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.user-avatar-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text);
+}
+
+.user-avatar-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.25);
+}
+
+.user-avatar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 8px;
+  z-index: 50;
+  min-width: 148px;
+  padding: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+}
+
+.user-menu[hidden] {
+  display: none;
+}
+
+.user-menu-item {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.user-menu-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
 .logo {
   width: 36px;
   height: 36px;
@@ -550,6 +627,13 @@ body {
 
   .sidebar-header {
     display: none;
+  }
+
+  .sidebar-account {
+    width: auto;
+    padding: 0 8px 0 0;
+    margin-bottom: 0;
+    align-self: center;
   }
 
   .agent-nav {
