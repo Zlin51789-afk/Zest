@@ -2,6 +2,19 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
+    <!-- 在模块 JS 加载前将 www 跳到主域 chipgo.net，避免跨子域导致登录 Cookie 无法随请求发送 -->
+    <script>
+      (function () {
+        if (location.hostname !== 'www.chipgo.net') return;
+        location.replace(
+          location.protocol +
+            '//chipgo.net' +
+            location.pathname +
+            location.search +
+            location.hash
+        );
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>智能助手</title>
     <link rel="stylesheet" href="/src/styles.css" />

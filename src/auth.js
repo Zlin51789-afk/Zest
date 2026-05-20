@@ -3,6 +3,18 @@ const SESSION_ERROR =
   '\u767b\u5f55\u5df2\u5931\u6548\u6216\u8d26\u53f7\u5df2\u8fc7\u671f\uff0c\u8bf7\u91cd\u65b0\u767b\u5f55';
 const BROWSER_SESSION_KEY = 'chipgo_browser_active';
 
+/**
+ * www.chipgo.net \u4e0a\u66fe\u51fa\u73b0\u9996\u9875\u4ecd\u5728 www\u3001/api \u88ab\u91cd\u5b9a\u5411\u5230 chipgo.net \u7684\u60c5\u51b5\uff0c
+ * \u8de8\u6e90 + \u51ed\u8bc1 fetch \u5728\u90e8\u5206\u6d4f\u89c8\u5668\u4e0b\u4f1a\u5bfc\u81f4\u767b\u5f55\u65e0\u53cd\u5e94\u3002\u7edf\u4e00\u8d70\u4e3b\u57df\u540d API\u3002
+ */
+export function resolveApiUrl(path) {
+  if (typeof window === 'undefined' || typeof path !== 'string') return path;
+  if (path.startsWith('/api') && window.location.hostname === 'www.chipgo.net') {
+    return `${window.location.protocol}//chipgo.net${path}`;
+  }
+  return path;
+}
+
 export function showLoginScreen() {
   document.getElementById('loginScreen').hidden = false;
   document.getElementById('app').hidden = true;
@@ -39,13 +51,13 @@ function clearBrowserSession() {
 
 async function clearServerSession() {
   try {
-    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    await fetch(resolveApiUrl('/api/auth/logout'), { method: 'POST', credentials: 'include' });
   } catch {
     /* ignore */
   }
 }
 
-/** ??????? Cookie ??????????? */
+/** \u6e05\u9664\u672c\u5730\u6807\u8bb0\u4e0e\u670d\u52a1\u7aef Cookie\uff0c\u56de\u5230\u767b\u5f55\u9875 */
 export async function logout() {
   clearBrowserSession();
   await clearServerSession();
@@ -56,7 +68,7 @@ export async function logout() {
 
 export async function checkSession() {
   try {
-    const res = await fetch('/api/auth/session', { credentials: 'include' });
+    const res = await fetch(resolveApiUrl('/api/auth/session'), { credentials: 'include' });
     return res.ok;
   } catch {
     return false;
@@ -64,7 +76,8 @@ export async function checkSession() {
 }
 
 export async function authFetch(url, options = {}) {
-  const res = await fetch(url, {
+  const target = typeof url === 'string' ? resolveApiUrl(url) : url;
+  const res = await fetch(target, {
     ...options,
     credentials: 'include',
   });
@@ -100,7 +113,7 @@ export function initAuth(onSuccess) {
       await clearServerSession();
       showLoginScreen();
       errorEl.textContent =
-        '\u767b\u5f55\u72b6\u6001\u6821\u9a8c\u5931\u8d25\uff0c\u8bf7\u786e\u8ba4\u4f7f\u7528 https://chipgo.net \u6216 https://www.chipgo.net \uff08\u6ce8\u610f\u57df\u540d\u4e3a .net \uff09\uff0c\u5e76\u5c1d\u8bd5\u6e05\u9664\u7f13\u5b58\u540e\u91cd\u8bd5\u3002';
+        '\u767b\u5f55\u72b6\u6001\u6821\u9a8c\u5931\u8d25\u3002\u8bf7\u76f4\u63a5\u7528 https://chipgo.net \u6253\u5f00\uff08\u4e0d\u8981\u7528 www\uff09\uff0c\u6216\u5f3a\u5237\u65b0\u9875\u9762\u540e\u91cd\u8bd5\u3002\u82e5\u4ecd\u5931\u8d25\uff0c\u8bf7\u6e05\u9664\u672c\u7ad9\u6570\u636e\u4e0e Cookie \u540e\u518d\u767b\u5f55\u3002';
       errorEl.hidden = false;
       return;
     }
@@ -127,6 +140,8 @@ export function initAuth(onSuccess) {
     return false;
   }
 
+  const submitBtn = form.querySelector('button[type="submit"]');
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     errorEl.hidden = true;
@@ -134,8 +149,9 @@ export function initAuth(onSuccess) {
     const username = userInput.value.trim();
     const password = passInput.value;
 
+    if (submitBtn) submitBtn.disabled = true;
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch(resolveApiUrl('/api/auth/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -157,6 +173,8 @@ export function initAuth(onSuccess) {
       errorEl.textContent =
         '\u7f51\u7edc\u5f02\u5e38\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5';
       errorEl.hidden = false;
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
     }
   });
 
