@@ -3,6 +3,16 @@ const SESSION_ERROR =
   '\u767b\u5f55\u5df2\u5931\u6548\u6216\u8d26\u53f7\u5df2\u8fc7\u671f\uff0c\u8bf7\u91cd\u65b0\u767b\u5f55';
 const BROWSER_SESSION_KEY = 'chipgo_browser_active';
 
+/** \u4f18\u5148\u5c55\u793a\u4eba\u8bfb\u6587\u672c message\uff0c\u907f\u514d\u5c06 SESSION_INVALID \u7b49\u673a\u8bfb\u7801\u5c55\u793a\u7ed9\u7528\u6237 */
+function userFacingApiError(data, fallback) {
+  const d = data || {};
+  const msg = typeof d.message === 'string' && d.message.trim();
+  if (msg) return msg;
+  const err = typeof d.error === 'string' && d.error.trim();
+  if (err && err !== 'SESSION_INVALID') return err;
+  return fallback;
+}
+
 /**
  * www.chipgo.net \u4e0a\u66fe\u51fa\u73b0\u9996\u9875\u4ecd\u5728 www\u3001/api \u88ab\u91cd\u5b9a\u5411\u5230 chipgo.net \u7684\u60c5\u51b5\uff0c
  * \u8de8\u6e90 + \u51ed\u8bc1 fetch \u5728\u90e8\u5206\u6d4f\u89c8\u5668\u4e0b\u4f1a\u5bfc\u81f4\u767b\u5f55\u65e0\u53cd\u5e94\u3002\u7edf\u4e00\u8d70\u4e3b\u57df\u540d API\u3002
@@ -88,10 +98,10 @@ export async function authFetch(url, options = {}) {
     showLoginScreen();
     const errorEl = document.getElementById('loginError');
     if (errorEl) {
-      errorEl.textContent = data.error || data.message || SESSION_ERROR;
+      errorEl.textContent = userFacingApiError(data, SESSION_ERROR);
       errorEl.hidden = false;
     }
-    throw new Error(data.message || data.error || SESSION_ERROR);
+    throw new Error(userFacingApiError(data, SESSION_ERROR));
   }
 
   return res;
@@ -161,7 +171,7 @@ export function initAuth(onSuccess) {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        errorEl.textContent = data.error || LOGIN_ERROR;
+        errorEl.textContent = userFacingApiError(data, LOGIN_ERROR);
         errorEl.hidden = false;
         passInput.value = '';
         passInput.focus();
