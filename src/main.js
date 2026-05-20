@@ -240,10 +240,15 @@ async function sendMessage() {
   const history = buildHistory(session).slice(0, -1);
 
   try {
+    const chatSignal =
+      typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function'
+        ? AbortSignal.timeout(110_000)
+        : undefined;
     const res = await authFetch(`/api/chat/${currentAgentId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: text, history }),
+      ...(chatSignal ? { signal: chatSignal } : {}),
     });
 
     const data = await res.json().catch(() => ({}));

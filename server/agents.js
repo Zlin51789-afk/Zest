@@ -4,6 +4,7 @@ import {
   buildProgressContext,
   buildQaContext,
   buildJfm9FolderCatalog,
+  buildMatchedDocsCatalog,
   documentDownloadUrl,
   isJfm9FolderQuery,
   matchDocuments,
@@ -15,6 +16,9 @@ import { isOpenClawConfigured } from './openclaw.js';
 function sessionUser(agentId) {
   return `web2:${agentId}`;
 }
+
+/** \u5339\u914d\u5230\u8d85\u8fc7\u8be5\u6570\u91cf\u5219\u4e0d\u8c03 LLM\uff0c\u76f4\u63a5\u8fd4\u56de\u6e05\u5355\uff08\u9632\u6b62\u5927\u6279\u91cf\u8d85\u65f6\uff09 */
+const MAX_DOCS_FOR_LLM = 3;
 
 function toHistory(messages = []) {
   return messages
@@ -46,6 +50,13 @@ async function runOpenClawAgent(agentId, message, { history = [] } = {}) {
         if (isJfm9FolderQuery(message)) {
           return {
             text: buildJfm9FolderCatalog(docs),
+            attachments,
+          };
+        }
+
+        if (docs.length > MAX_DOCS_FOR_LLM) {
+          return {
+            text: buildMatchedDocsCatalog(docs),
             attachments,
           };
         }

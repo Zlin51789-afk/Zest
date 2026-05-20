@@ -109,6 +109,32 @@ export function buildJfm9FolderCatalog(docs) {
   return lines.join('\n');
 }
 
+/** 多文件匹配时生成本地清单（不走 LLM，避免大批量请求超时） */
+export function buildMatchedDocsCatalog(docs) {
+  const sorted = [...docs].sort((a, b) => a.localeCompare(b, 'zh-CN'));
+  const byDir = new Map();
+  for (const rel of sorted) {
+    const dir = path.dirname(rel);
+    const key = dir === '.' ? '根目录' : `${dir}/`;
+    if (!byDir.has(key)) byDir.set(key, []);
+    byDir.get(key).push(rel);
+  }
+  const lines = [
+    '以下文件已匹配，请逐一点击下方 **↓ 下载** 获取。',
+    '',
+  ];
+  for (const [dirLabel, paths] of [...byDir.entries()].sort((a, b) =>
+    a[0].localeCompare(b[0], 'zh-CN')
+  )) {
+    lines.push(`**${dirLabel}**`);
+    paths.forEach((rel, i) => {
+      lines.push(`${i + 1}. \`${rel}\``);
+    });
+    lines.push('');
+  }
+  return lines.join('\n').trimEnd();
+}
+
 function isFolderOnlyQuery(q, files) {
   if (isJfm9FolderQuery(q.replace(/\s/g, '')) && files.some(isJfm9Document)) {
     return true;
