@@ -438,10 +438,13 @@ export async function buildProgressContext(message) {
   const lower = message.toLowerCase();
 
   let target = null;
+  /** \u7528\u6237\u6d88\u606f\u91cc\u660e\u786e\u51fa\u73b0\u9879\u76ee/\u6587\u4ef6\u540d\u5173\u952e\u8bcd\u65f6\u4e3a true\uff1b\u4ec5\u56e0\u53ea\u6709\u4e00\u4e2a JSON \u800c\u9ed8\u8ba4\u9009\u4e2d\u65f4\u4e3a false\uff08\u907f\u514d\u6bcf\u53e5\u90fd\u76f4\u51fa\u540c\u4e00\u6bb5\u8fdb\u5ea6\uff09 */
+  let matchedProgressFromMessage = false;
   for (const file of jsonFiles) {
     const base = file.replace('.json', '').toLowerCase();
     if (lower.includes(base) || (lower.includes('alpha') && base.includes('alpha'))) {
       target = file;
+      matchedProgressFromMessage = true;
       break;
     }
   }
@@ -450,11 +453,16 @@ export async function buildProgressContext(message) {
   const available = jsonFiles.map((f) => f.replace('.json', '')).join('、');
 
   if (!target) {
-    return { target: null, available, rawJson: null };
+    return {
+      target: null,
+      available,
+      rawJson: null,
+      matchedProgressFromMessage: false,
+    };
   }
 
   const rawJson = await fs.readFile(path.join(PROGRESS_DIR, target), 'utf-8');
-  return { target, available, rawJson };
+  return { target, available, rawJson, matchedProgressFromMessage };
 }
 
 export const SYSTEM_PROMPTS = {

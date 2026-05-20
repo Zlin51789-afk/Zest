@@ -101,7 +101,7 @@ async function runOpenClawAgent(agentId, message, { history = [] } = {}) {
     }
     case 'progress': {
       const ctx = await buildProgressContext(message);
-      if (ctx.rawJson) {
+      if (ctx.rawJson && ctx.matchedProgressFromMessage) {
         const instant = formatProgressInstantFromJson(ctx.rawJson);
         if (instant) {
           return { text: instant, attachments: [] };
