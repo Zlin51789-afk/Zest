@@ -42,7 +42,7 @@ export async function createApp() {
   app.post('/api/auth/login', async (req, res) => {
     const { username, password } = req.body || {};
     if (!validateCredentials(username, password)) {
-      return res.status(401).json({ error: '???????????' });
+      return res.status(401).json({ error: '账号或密码错误，请重试' });
     }
     const token = await createLoginSession(username);
     res.cookie(AUTH_COOKIE, token, cookieOptions());
@@ -57,7 +57,7 @@ export async function createApp() {
     res.clearCookie(AUTH_COOKIE, cookieOptions());
     res.status(401).json({
       error: 'SESSION_INVALID',
-      message: '??????????????????????',
+      message: '账号已在其他设备登录或登录已过期，请重新登录',
     });
   });
 
@@ -73,7 +73,7 @@ export async function createApp() {
     res.clearCookie(AUTH_COOKIE, cookieOptions());
     res.status(401).json({
       error: 'SESSION_INVALID',
-      message: '??????????????????????',
+      message: '账号已在其他设备登录或登录已过期，请重新登录',
     });
   });
 

@@ -1,5 +1,5 @@
-const LOGIN_ERROR = '???????????';
-const SESSION_ERROR = '??????????????????????';
+const LOGIN_ERROR = '账号或密码错误，请重试';
+const SESSION_ERROR = '账号已在其他设备登录或登录已过期，请重新登录';
 const BROWSER_SESSION_KEY = 'chipgo_browser_active';
 
 export function showLoginScreen() {
@@ -16,7 +16,7 @@ function markBrowserSession() {
   try {
     sessionStorage.setItem(BROWSER_SESSION_KEY, '1');
   } catch {
-    /* ????? */
+    /* ignore */
   }
 }
 
@@ -54,7 +54,6 @@ export async function checkSession() {
   }
 }
 
-/** ??? Cookie ????401 ?????? */
 export async function authFetch(url, options = {}) {
   const res = await fetch(url, {
     ...options,
@@ -98,10 +97,10 @@ export function initAuth(onSuccess) {
   }
 
   async function tryRestoreSession() {
-    // ????? sessionStorage ??????? Cookie
     if (!hasBrowserSession()) {
       await clearServerSession();
       showLoginScreen();
+      if (errorEl) errorEl.hidden = true;
       return false;
     }
     if (await checkSession()) {
@@ -112,6 +111,7 @@ export function initAuth(onSuccess) {
     clearBrowserSession();
     await clearServerSession();
     showLoginScreen();
+    if (errorEl) errorEl.hidden = true;
     return false;
   }
 
@@ -142,7 +142,7 @@ export function initAuth(onSuccess) {
 
       await enterApp();
     } catch {
-      errorEl.textContent = '??????????';
+      errorEl.textContent = '网络异常，请稍后重试';
       errorEl.hidden = false;
     }
   });
