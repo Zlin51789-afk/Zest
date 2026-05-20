@@ -19,10 +19,16 @@ import {
   AUTH_COOKIE,
   cookieOptions,
   createLoginSession,
+  getLoginFailureMessage,
   getSessionTokenFromRequest,
-  validateCredentials,
   validateSessionToken,
 } from './authSession.js';
+import {
+  checkAdminSecret,
+  extendAccount,
+  listAccountsPublic,
+  updateAccount,
+} from './authAccounts.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -41,8 +47,9 @@ export async function createApp() {
 
   app.post('/api/auth/login', async (req, res) => {
     const { username, password } = req.body || {};
-    if (!validateCredentials(username, password)) {
-      return res.status(401).json({ error: '账号或密码错误，请重试' });
+    const errMsg = await getLoginFailureMessage(username, password);
+    if (errMsg) {
+      return res.status(401).json({ error: errMsg });
     }
     const token = await createLoginSession(username);
     res.cookie(AUTH_COOKIE, token, cookieOptions());
@@ -57,7 +64,7 @@ export async function createApp() {
     res.clearCookie(AUTH_COOKIE, cookieOptions());
     res.status(401).json({
       error: 'SESSION_INVALID',
-      message: '账号已在其他设备登录或登录已过期，请重新登录',
+      message: '登录已失效或账号已过期，请重新登录',
     });
   });
 
@@ -66,16 +73,60 @@ export async function createApp() {
     res.json({ ok: true });
   });
 
+  app.get('/api/auth/admin/accounts', async (req, res) => {
+    if (!checkAdminSecret(req)) {
+      return res.status(403).json({ error: '无管理权限' });
+    }
+    const accounts = await listAccountsPublic();
+    res.json({ accounts });
+  });
+
+  app.patch('/api/auth/admin/accounts/:username', async (req, res) => {
+    if (!checkAdminSecret(req)) {
+      return res.status(403).json({ error: '无管理权限' });
+    }
+    try {
+      const { extendDays = 30 } = req.body || {};
+      const account = await extendAccount(req.params.username, extendDays);
+      res.json({
+        ok: true,
+        username: req.params.username,
+        expiresAt: account.expiresAt,
+      });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.put('/api/auth/admin/accounts/:username', async (req, res) => {
+    if (!checkAdminSecret(req)) {
+      return res.status(403).json({ error: '无管理权限' });
+    }
+    try {
+      const account = await updateAccount(req.params.username, req.body || {});
+      res.json({
+        ok: true,
+        username: req.params.username,
+        expiresAt: account.expiresAt,
+        note: account.note || '',
+      });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
   app.use(async (req, res, next) => {
     if (!req.path.startsWith('/api/')) return next();
+    if (req.path.startsWith('/api/auth/admin/')) return next();
     const token = getSessionTokenFromRequest(req);
     if (await validateSessionToken(token)) return next();
     res.clearCookie(AUTH_COOKIE, cookieOptions());
     res.status(401).json({
       error: 'SESSION_INVALID',
-      message: '账号已在其他设备登录或登录已过期，请重新登录',
+      message: '登录已失效或账号已过期，请重新登录',
     });
   });
+
 
   app.get('/api/agents', (_req, res) => {
     const list = Object.values(AGENTS).map(({ id, name, subtitle }) => ({
