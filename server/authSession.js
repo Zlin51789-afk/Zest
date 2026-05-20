@@ -4,7 +4,7 @@ import { isAccountActive, validateAccountLogin } from './authAccounts.js';
 export const AUTH_COOKIE = 'chipgo_session';
 const AUTH_SECRET =
   process.env.AUTH_SECRET || 'chipgo-session-secret-change-in-production';
-/** ?? Cookie ?????????????? sessionStorage ??? */
+/** Cookie \u6709\u6548\u671f\u4e0e sessionStorage \u6d4f\u89c8\u5668\u6807\u8bb0\u8bf4\u660e */
 const TOKEN_MAX_AGE_MS = 12 * 60 * 60 * 1000;
 
 function sign(payloadB64) {

@@ -183,17 +183,19 @@ export async function createApp() {
   app.get('/api/download', async (req, res) => {
     const relPath = req.query.path;
     if (typeof relPath !== 'string' || !relPath.trim()) {
-      return res.status(400).json({ error: '?? path ??' });
+      return res.status(400).json({
+        error: '\u7f3a\u5c11 path \u53c2\u6570\u6216\u8def\u5f84\u65e0\u6548',
+      });
     }
 
     const fullPath = resolveDocumentPath(relPath.trim());
     if (!fullPath || !existsSync(fullPath)) {
-      return res.status(404).json({ error: '?????' });
+      return res.status(404).json({ error: '\u6587\u4ef6\u4e0d\u5b58\u5728\u6216\u65e0\u6743\u8bbf\u95ee' });
     }
 
     res.download(fullPath, path.basename(fullPath), (err) => {
       if (err && !res.headersSent) {
-        res.status(500).json({ error: '????' });
+        res.status(500).json({ error: '\u4e0b\u8f7d\u5931\u8d25' });
       }
     });
   });
@@ -204,7 +206,8 @@ export async function createApp() {
       return res.json({
         ok: false,
         configured: false,
-        error: '??? AI?MOONSHOT_API_KEY ? OpenClaw?',
+        error:
+          '\u672a\u914d\u7f6e AI\uff1a\u8bf7\u8bbe\u7f6e MOONSHOT_API_KEY\uff08\u7ebf\u4e0a\uff09\u6216\u914d\u7f6e OpenClaw Gateway\u3002',
       });
     }
     const health = await checkAiHealth();
@@ -248,7 +251,7 @@ export async function createApp() {
 
   app.post('/api/upload', upload.single('file'), async (req, res) => {
     if (!req.file) {
-      return res.status(400).json({ error: '?????' });
+      return res.status(400).json({ error: '\u672a\u4e0a\u4f20\u6587\u4ef6' });
     }
     res.json({
       name: req.file.originalname,

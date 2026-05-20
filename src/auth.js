@@ -194,7 +194,7 @@ export function initAuth(onSuccess) {
       passToggle.setAttribute('aria-pressed', String(reveal));
       passToggle.setAttribute(
         'aria-label',
-        reveal ? '????' : '????'
+        reveal ? '\u9690\u85cf\u5bc6\u7801' : '\u663e\u793a\u5bc6\u7801'
       );
     });
   }
@@ -226,7 +226,7 @@ export function initAuth(onSuccess) {
           passIconHidden.hidden = false;
           passIconVisible.hidden = true;
           passToggle.setAttribute('aria-pressed', 'false');
-          passToggle.setAttribute('aria-label', '????');
+          passToggle.setAttribute('aria-label', '\u663e\u793a\u5bc6\u7801');
         }
         passInput.focus();
         return;
