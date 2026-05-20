@@ -1,5 +1,7 @@
 const LOGIN_ERROR = '???????????';
 const SESSION_ERROR = '??????????????????????';
+/** ?????????/????????????????? */
+const BROWSER_SESSION_KEY = 'chipgo_browser_active';
 
 export function showLoginScreen() {
   document.getElementById('loginScreen').hidden = false;
@@ -11,7 +13,40 @@ export function showAppScreen() {
   document.getElementById('app').hidden = false;
 }
 
+function markBrowserSession() {
+  try {
+    sessionStorage.setItem(BROWSER_SESSION_KEY, '1');
+  } catch {
+    /* ????? */
+  }
+}
+
+function hasBrowserSession() {
+  try {
+    return sessionStorage.getItem(BROWSER_SESSION_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function clearBrowserSession() {
+  try {
+    sessionStorage.removeItem(BROWSER_SESSION_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+async function clearServerSession() {
+  try {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+  } catch {
+    /* ignore */
+  }
+}
+
 export async function checkSession() {
+  if (!hasBrowserSession()) return false;
   try {
     const res = await fetch('/api/auth/session', { credentials: 'include' });
     return res.ok;
@@ -28,6 +63,7 @@ export async function authFetch(url, options = {}) {
   });
 
   if (res.status === 401) {
+    clearBrowserSession();
     const data = await res.json().catch(() => ({}));
     showLoginScreen();
     const errorEl = document.getElementById('loginError');
@@ -50,11 +86,12 @@ export function initAuth(onSuccess) {
   const passInput = document.getElementById('loginPass');
 
   async function enterApp() {
+    markBrowserSession();
     const ok = await checkSession();
     if (!ok) {
+      clearBrowserSession();
+      await clearServerSession();
       showLoginScreen();
-      errorEl.textContent = SESSION_ERROR;
-      errorEl.hidden = false;
       return;
     }
     showAppScreen();
@@ -62,11 +99,19 @@ export function initAuth(onSuccess) {
   }
 
   async function tryRestoreSession() {
+    // ????? sessionStorage ????? Cookie ???? ? ????
+    if (!hasBrowserSession()) {
+      await clearServerSession();
+      showLoginScreen();
+      return false;
+    }
     if (await checkSession()) {
       showAppScreen();
       onSuccess();
       return true;
     }
+    clearBrowserSession();
+    await clearServerSession();
     showLoginScreen();
     return false;
   }

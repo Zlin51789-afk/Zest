@@ -15,6 +15,8 @@ export const AUTH_ACCOUNTS = {
 export const AUTH_COOKIE = 'chipgo_session';
 const AUTH_SECRET =
   process.env.AUTH_SECRET || 'chipgo-session-secret-change-in-production';
+/** ????????????????? sessionStorage ???????? */
+const TOKEN_MAX_AGE_MS = 12 * 60 * 60 * 1000;
 
 const SESSION_FILE = process.env.VERCEL
   ? '/tmp/chipgo-active-session.json'
@@ -74,8 +76,9 @@ function parseSignedToken(token) {
   const [payloadB64, sig] = token.split('.');
   if (sign(payloadB64) !== sig) return null;
   try {
-    const { u, s } = JSON.parse(Buffer.from(payloadB64, 'base64url').toString());
+    const { u, s, t } = JSON.parse(Buffer.from(payloadB64, 'base64url').toString());
     if (!u || !s) return null;
+    if (t && Date.now() - t > TOKEN_MAX_AGE_MS) return null;
     return { username: u, sid: s };
   } catch {
     return null;
