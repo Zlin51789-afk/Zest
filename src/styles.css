@@ -136,14 +136,6 @@ body {
   background: rgba(0, 0, 0, 0.05);
 }
 
-.logo {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: linear-gradient(145deg, #1d1d1f 0%, #424245 100%);
-  margin-bottom: 20px;
-}
-
 .brand {
   font-size: 22px;
   font-weight: 600;
@@ -683,10 +675,6 @@ body {
   border-radius: var(--radius);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
-}
-
-.login-card .logo {
-  margin-bottom: 20px;
 }
 
 .login-card .brand {
