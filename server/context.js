@@ -374,7 +374,7 @@ export async function buildQaContext() {
   return value;
 }
 
-/** \u7528\u6237\u95ee\u53e5\u547d\u4e2d FAQ \u5173\u952e\u8bcd\u65f6\u76f4\u63a5\u8fd4\u56de\u7f51\u7ad9\u9884\u7f6e\u7b54\u6848\uff0c\u65e0\u9700\u8c03\u7528 LLM */
+/** \u7528\u6237\u95ee\u53e5\u547d\u4e2d FAQ \u5173\u952e\u8bcd\u65f6\u76f4\u63a5\u8fd4\u56de\u7f51\u7ad9\u9884\u7f6e\u7b54\u6848\uff08\u907f\u514d\u5355\u5b57\u5982\u300c\u6280\u672f\u300d\u8fc7\u5bbd\u5bfc\u81f4\u6bcf\u95ee\u90fd\u540c\u4e00\u53e5\uff09 */
 export function matchFaqInstantAnswer(message, faq) {
   const m = String(message || '').trim();
   if (!m || !Array.isArray(faq)) return null;
@@ -383,10 +383,17 @@ export function matchFaqInstantAnswer(message, faq) {
   for (const item of faq) {
     const kws = Array.isArray(item.keywords) ? item.keywords : [];
     let score = 0;
+    let hitCount = 0;
+    let maxLenHit = 0;
     for (const kw of kws) {
       const k = String(kw || '').trim();
-      if (k && m.includes(k)) score += k.length;
+      if (!k || !m.includes(k)) continue;
+      hitCount += 1;
+      score += k.length;
+      if (k.length > maxLenHit) maxLenHit = k.length;
     }
+    const instantOk = hitCount >= 2 || (hitCount === 1 && maxLenHit >= 3);
+    if (!instantOk) continue;
     if (score > bestScore && typeof item.answer === 'string' && item.answer.trim()) {
       bestScore = score;
       bestAnswer = item.answer.trim();
