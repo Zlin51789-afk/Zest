@@ -61,16 +61,19 @@ async function runOpenClawAgent(agentId, message, { history = [] } = {}) {
         } catch {
           aiText = '';
         }
-        const names = docs.map((d) => path.basename(d)).join('、');
-        const downloadHint =
+        const trimmed = typeof aiText === 'string' ? aiText.trim() : '';
+        const hasUsefulAi =
+          trimmed.length > 0 && !/未找到|无法找到|不存在|抱歉/i.test(trimmed);
+
+        if (hasUsefulAi) {
+          return { text: trimmed, attachments };
+        }
+
+        const fallback =
           docs.length === 1
-            ? `已找到文档 **${names}**，请点击下方 **↓ 下载** 按钮获取文件。\n\n路径：\`${docs[0]}\``
-            : `已找到 **${docs.length}** 个文档，请分别点击下方按钮下载：\n${names}`;
-        const text =
-          aiText && !/未找到|无法找到|不存在|抱歉/i.test(aiText)
-            ? `${downloadHint}\n\n${aiText}`
-            : downloadHint;
-        return { text, attachments };
+            ? `请点击下方 **↓ 下载** 获取 \`${path.basename(docs[0])}\`。`
+            : '已在下方附上可下载文件，请逐一点击 **↓ 下载** 获取。';
+        return { text: fallback, attachments };
       }
       break;
     }
