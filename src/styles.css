@@ -117,6 +117,21 @@ body {
   display: none;
 }
 
+.user-menu-username {
+  padding: 8px 12px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.35;
+  word-break: break-all;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2px;
+}
+
+.user-menu-username[hidden] {
+  display: none;
+}
+
 .user-menu-item {
   display: block;
   width: 100%;

@@ -25,6 +25,32 @@ export function resolveApiUrl(path) {
   return path;
 }
 
+export function clearUserMenuIdentity() {
+  const el = document.getElementById('userMenuUsername');
+  if (!el) return;
+  el.textContent = '';
+  el.hidden = true;
+}
+
+export async function refreshUserMenuIdentity() {
+  const el = document.getElementById('userMenuUsername');
+  if (!el) return;
+  try {
+    const res = await fetch(resolveApiUrl('/api/auth/session'), { credentials: 'include' });
+    const data = await res.json().catch(() => ({}));
+    const name =
+      data.username != null && typeof data.username === 'string' ? data.username.trim() : '';
+    if (res.ok && name) {
+      el.textContent = name;
+      el.hidden = false;
+    } else {
+      clearUserMenuIdentity();
+    }
+  } catch {
+    clearUserMenuIdentity();
+  }
+}
+
 export function showLoginScreen() {
   document.getElementById('loginScreen').hidden = false;
   document.getElementById('app').hidden = true;
@@ -69,6 +95,7 @@ async function clearServerSession() {
 
 /** \u6e05\u9664\u672c\u5730\u6807\u8bb0\u4e0e\u670d\u52a1\u7aef Cookie\uff0c\u56de\u5230\u767b\u5f55\u9875 */
 export async function logout() {
+  clearUserMenuIdentity();
   clearBrowserSession();
   await clearServerSession();
   const errEl = document.getElementById('loginError');
@@ -93,6 +120,7 @@ export async function authFetch(url, options = {}) {
   });
 
   if (res.status === 401) {
+    clearUserMenuIdentity();
     clearBrowserSession();
     const data = await res.json().catch(() => ({}));
     showLoginScreen();
@@ -128,6 +156,7 @@ export function initAuth(onSuccess) {
       return;
     }
     showAppScreen();
+    await refreshUserMenuIdentity();
     onSuccess();
   }
 
@@ -140,6 +169,7 @@ export function initAuth(onSuccess) {
     }
     if (await checkSession()) {
       showAppScreen();
+      await refreshUserMenuIdentity();
       onSuccess();
       return true;
     }

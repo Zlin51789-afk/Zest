@@ -21,6 +21,7 @@ import {
   createLoginSession,
   getLoginFailureMessage,
   getSessionTokenFromRequest,
+  getSessionUsernameFromToken,
   validateSessionToken,
 } from './authSession.js';
 import {
@@ -59,13 +60,15 @@ export async function createApp() {
 
   app.get('/api/auth/session', async (req, res) => {
     const token = getSessionTokenFromRequest(req);
-    if (await validateSessionToken(token)) {
-      return res.json({ ok: true });
+    const username = await getSessionUsernameFromToken(token);
+    if (username) {
+      return res.json({ ok: true, username });
     }
     res.clearCookie(AUTH_COOKIE, cookieOptions(req));
     res.status(401).json({
       error: 'SESSION_INVALID',
-      message: '登录已失效或账号已过期，请重新登录',
+      message:
+        '\u767b\u5f55\u5df2\u5931\u6548\u6216\u8d26\u53f7\u5df2\u8fc7\u671f\uff0c\u8bf7\u91cd\u65b0\u767b\u5f55',
     });
   });
 
@@ -76,7 +79,7 @@ export async function createApp() {
 
   app.get('/api/auth/admin/accounts', async (req, res) => {
     if (!checkAdminSecret(req)) {
-      return res.status(403).json({ error: '无管理权限' });
+      return res.status(403).json({ error: '\u65e0\u7ba1\u7406\u6743\u9650' });
     }
     const accounts = await listAccountsPublic();
     res.json({ accounts });
@@ -84,7 +87,7 @@ export async function createApp() {
 
   app.patch('/api/auth/admin/accounts/:username', async (req, res) => {
     if (!checkAdminSecret(req)) {
-      return res.status(403).json({ error: '无管理权限' });
+      return res.status(403).json({ error: '\u65e0\u7ba1\u7406\u6743\u9650' });
     }
     try {
       const { extendDays = 30 } = req.body || {};
@@ -101,7 +104,7 @@ export async function createApp() {
 
   app.put('/api/auth/admin/accounts/:username', async (req, res) => {
     if (!checkAdminSecret(req)) {
-      return res.status(403).json({ error: '无管理权限' });
+      return res.status(403).json({ error: '\u65e0\u7ba1\u7406\u6743\u9650' });
     }
     try {
       const account = await updateAccount(req.params.username, req.body || {});
@@ -131,7 +134,8 @@ export async function createApp() {
     res.clearCookie(AUTH_COOKIE, cookieOptions(req));
     res.status(401).json({
       error: 'SESSION_INVALID',
-      message: '登录已失效或账号已过期，请重新登录',
+      message:
+        '\u767b\u5f55\u5df2\u5931\u6548\u6216\u8d26\u53f7\u5df2\u8fc7\u671f\uff0c\u8bf7\u91cd\u65b0\u767b\u5f55',
     });
   });
 

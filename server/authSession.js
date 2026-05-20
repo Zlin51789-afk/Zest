@@ -54,10 +54,20 @@ export async function createLoginSession(username) {
   return createSignedToken(user, sid);
 }
 
-export async function validateSessionToken(token) {
+async function sessionUsernameIfValid(token) {
   const parsed = parseSignedToken(token);
-  if (!parsed) return false;
-  return isAccountActive(parsed.username);
+  if (!parsed) return null;
+  if (!(await isAccountActive(parsed.username))) return null;
+  return parsed.username;
+}
+
+export async function validateSessionToken(token) {
+  return (await sessionUsernameIfValid(token)) !== null;
+}
+
+/** \u6821\u9a8c token \u5e76\u8fd4\u56de\u8d26\u53f7\uff08\u4ec5\u5728\u8d26\u53f7\u4ecd\u6709\u6548\u65f6\uff09 */
+export async function getSessionUsernameFromToken(token) {
+  return sessionUsernameIfValid(token);
 }
 
 export function parseCookie(req, name) {
