@@ -39,6 +39,7 @@ export async function createApp() {
   await fs.mkdir(UPLOAD_DIR, { recursive: true });
 
   const app = express();
+  app.set('trust proxy', 1);
   const upload = multer({ dest: UPLOAD_DIR });
 
   app.use(cors({ origin: true, credentials: true }));
@@ -52,7 +53,7 @@ export async function createApp() {
       return res.status(401).json({ error: errMsg });
     }
     const token = await createLoginSession(username);
-    res.cookie(AUTH_COOKIE, token, cookieOptions());
+    res.cookie(AUTH_COOKIE, token, cookieOptions(req));
     res.json({ ok: true });
   });
 
@@ -61,15 +62,15 @@ export async function createApp() {
     if (await validateSessionToken(token)) {
       return res.json({ ok: true });
     }
-    res.clearCookie(AUTH_COOKIE, cookieOptions());
+    res.clearCookie(AUTH_COOKIE, cookieOptions(req));
     res.status(401).json({
       error: 'SESSION_INVALID',
       message: '登录已失效或账号已过期，请重新登录',
     });
   });
 
-  app.post('/api/auth/logout', (_req, res) => {
-    res.clearCookie(AUTH_COOKIE, cookieOptions());
+  app.post('/api/auth/logout', (req, res) => {
+    res.clearCookie(AUTH_COOKIE, cookieOptions(req));
     res.json({ ok: true });
   });
 
@@ -127,7 +128,7 @@ export async function createApp() {
     }
     const token = getSessionTokenFromRequest(req);
     if (await validateSessionToken(token)) return next();
-    res.clearCookie(AUTH_COOKIE, cookieOptions());
+    res.clearCookie(AUTH_COOKIE, cookieOptions(req));
     res.status(401).json({
       error: 'SESSION_INVALID',
       message: '登录已失效或账号已过期，请重新登录',

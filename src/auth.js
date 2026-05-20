@@ -55,7 +55,6 @@ export async function logout() {
 }
 
 export async function checkSession() {
-  if (!hasBrowserSession()) return false;
   try {
     const res = await fetch('/api/auth/session', { credentials: 'include' });
     return res.ok;
@@ -100,6 +99,9 @@ export function initAuth(onSuccess) {
       clearBrowserSession();
       await clearServerSession();
       showLoginScreen();
+      errorEl.textContent =
+        '\u767b\u5f55\u72b6\u6001\u6821\u9a8c\u5931\u8d25\uff0c\u8bf7\u786e\u8ba4\u4f7f\u7528 https://chipgo.net \u6216 https://www.chipgo.net \uff08\u6ce8\u610f\u57df\u540d\u4e3a .net \uff09\uff0c\u5e76\u5c1d\u8bd5\u6e05\u9664\u7f13\u5b58\u540e\u91cd\u8bd5\u3002';
+      errorEl.hidden = false;
       return;
     }
     showAppScreen();

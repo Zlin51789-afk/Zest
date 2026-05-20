@@ -71,7 +71,7 @@ export function getSessionTokenFromRequest(req) {
   return parseCookie(req, AUTH_COOKIE);
 }
 
-export function cookieOptions() {
+export function cookieOptions(req) {
   const secure =
     process.env.VERCEL === '1' ||
     process.env.NODE_ENV === 'production';
@@ -81,7 +81,15 @@ export function cookieOptions() {
     sameSite: 'lax',
     path: '/',
   };
-  if (secure) {
+  const host = String(req?.hostname || req?.headers?.host || '')
+    .split(':')[0]
+    .toLowerCase();
+  if (
+    secure &&
+    (host === 'chipgo.net' ||
+      host === 'www.chipgo.net' ||
+      host.endsWith('.chipgo.net'))
+  ) {
     opts.domain = '.chipgo.net';
   }
   return opts;
