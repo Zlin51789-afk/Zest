@@ -236,6 +236,9 @@ function formatChatError(err) {
   ) {
     return '暂时无法获取回复：Kimi（Moonshot）服务繁忙或限流，请稍后再试。';
   }
+  if (/invalid temperature|only 1 is allowed/i.test(raw)) {
+    return '暂时无法获取回复：当前模型不支持该 temperature。请在部署环境删除 MOONSHOT_TEMPERATURE（或改为 1）后重新部署。';
+  }
   const host = typeof window !== 'undefined' ? window.location.hostname : '';
   const isLocal = host === 'localhost' || host === '127.0.0.1';
   if (isLocal) {

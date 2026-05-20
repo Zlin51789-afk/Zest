@@ -53,6 +53,6 @@ npm run dev
 
 - **`MOONSHOT_MODEL`**：在控制台选用延迟更低的模型（若账号支持），通常比盲目拉高 `max_tokens` 更有效。
 - **`MOONSHOT_MAX_TOKENS`**（默认 `1024`）：上限越低，生成越快，但超长答案可能被截断；需要长文时可调到 `1536`～`2048`。
-- **`MOONSHOT_TEMPERATURE`**（默认 `0.35`）：略低可略快、更稳。
+- **`MOONSHOT_TEMPERATURE`**：默认**不传**，由 Moonshot 按模型使用合法默认值（部分 Kimi 模型仅允许 `1`，自行设小数会报错）。仅在官方文档要求时再在环境变量中设置。
 - **`MOONSHOT_MAX_ATTEMPTS`**：设为 `1` 可取消过载时的第二次重试，失败更快返回（成功率略降）。
-- 走 OpenClaw 时可用 **`OPENCLAW_MAX_TOKENS`** / **`OPENCLAW_TEMPERATURE`**（未设置则回退到上面的 Moonshot 同名变量）。
+- 走 OpenClaw 时可用 **`OPENCLAW_MAX_TOKENS`**；**`OPENCLAW_TEMPERATURE`** 未设置时也不会传 `temperature`（若需与网关模型对齐可再设）。

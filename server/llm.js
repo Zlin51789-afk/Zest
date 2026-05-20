@@ -21,6 +21,9 @@ function moonshotUserFacingError(status, apiMsgRaw) {
   ) {
     return 'Kimi\uff08Moonshot\uff09\u670d\u52a1\u7e41\u5fd9\u6216\u9650\u6d41\uff0c\u8bf7\u7a0d\u540e\u518d\u8bd5\u3002';
   }
+  if (/invalid temperature/.test(low)) {
+    return '\u5f53\u524d\u6a21\u578b\u4e0d\u652f\u6301\u8be5 temperature \u503c\u3002\u8bf7\u5728\u90e8\u7f72\u73af\u5883\u5220\u9664 MOONSHOT_TEMPERATURE\uff08\u6216\u6539\u4e3a 1\uff09\u540e\u91cd\u65b0\u90e8\u7f72\u3002';
+  }
   if (raw) return raw;
   return `\u6708\u4e4b\u6697\u9762 API \u8fd4\u56de ${status}\uff0c\u8bf7\u68c0\u67e5 MOONSHOT_API_KEY\u3001\u4f59\u989d\u53ca MOONSHOT_MODEL \u662f\u5426\u652f\u6301\u3002`;
 }
@@ -38,9 +41,12 @@ function moonshotMaxTokens() {
   return Math.min(n, 8192);
 }
 
-function moonshotTemperature() {
-  const t = parseFloat(process.env.MOONSHOT_TEMPERATURE || '0.35');
-  if (!Number.isFinite(t)) return 0.35;
+/** \u672a\u8bbe\u7f6e\u5219\u4e0d\u4f20 temperature\uff08\u907f\u514d\u90e8\u5206 Kimi \u6a21\u578b\u62a5\u9519\uff1aonly 1 is allowed\uff09 */
+function moonshotTemperatureFromEnv() {
+  const raw = process.env.MOONSHOT_TEMPERATURE;
+  if (raw == null || String(raw).trim() === '') return undefined;
+  const t = parseFloat(String(raw));
+  if (!Number.isFinite(t)) return undefined;
   return Math.min(2, Math.max(0, t));
 }
 
@@ -58,7 +64,7 @@ async function chatWithMoonshot({
 
   const model = process.env.MOONSHOT_MODEL || 'kimi-k2.6';
   const maxTokens = moonshotMaxTokens();
-  const temperature = moonshotTemperature();
+  const temperature = moonshotTemperatureFromEnv();
   const messages = [
     { role: 'system', content: systemPrompt },
     ...history
@@ -79,19 +85,21 @@ async function chatWithMoonshot({
         await new Promise((r) => setTimeout(r, 350 * attempt));
       }
 
+      const body = {
+        model,
+        messages,
+        stream: false,
+        max_tokens: maxTokens,
+      };
+      if (temperature !== undefined) body.temperature = temperature;
+
       const res = await fetch(`${MOONSHOT_BASE}/chat/completions`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          model,
-          messages,
-          stream: false,
-          max_tokens: maxTokens,
-          temperature,
-        }),
+        body: JSON.stringify(body),
         signal: controller.signal,
       });
 

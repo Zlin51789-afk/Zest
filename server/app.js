@@ -46,6 +46,9 @@ function chatErrorHint(errMessage) {
   ) {
     return undefined;
   }
+  if (/invalid temperature|MOONSHOT_TEMPERATURE|only 1 is allowed/i.test(m)) {
+    return undefined;
+  }
   if (
     /MOONSHOT_API_KEY|\u672a\u914d\u7f6e|401|Unauthorized|invalid api key/i.test(m)
   ) {

@@ -87,11 +87,12 @@ function openClawMaxTokens() {
   return Math.min(n, 8192);
 }
 
-function openClawTemperature() {
-  const t = parseFloat(
-    process.env.OPENCLAW_TEMPERATURE || process.env.MOONSHOT_TEMPERATURE || '0.35'
-  );
-  if (!Number.isFinite(t)) return 0.35;
+function openClawTemperatureFromEnv() {
+  const raw =
+    process.env.OPENCLAW_TEMPERATURE ?? process.env.MOONSHOT_TEMPERATURE;
+  if (raw == null || String(raw).trim() === '') return undefined;
+  const t = parseFloat(String(raw));
+  if (!Number.isFinite(t)) return undefined;
   return Math.min(2, Math.max(0, t));
 }
 
@@ -112,7 +113,7 @@ export async function chatWithOpenClaw({
   }
 
   const maxTokens = openClawMaxTokens();
-  const temperature = openClawTemperature();
+  const temperature = openClawTemperatureFromEnv();
 
   const messages = [
     { role: 'system', content: systemPrompt },
@@ -126,20 +127,22 @@ export async function chatWithOpenClaw({
   const timer = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
 
   try {
+    const body = {
+      model,
+      user: sessionUser,
+      messages,
+      stream: false,
+      max_tokens: maxTokens,
+    };
+    if (temperature !== undefined) body.temperature = temperature;
+
     const res = await fetch(`${base}/v1/chat/completions`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model,
-        user: sessionUser,
-        messages,
-        stream: false,
-        max_tokens: maxTokens,
-        temperature,
-      }),
+      body: JSON.stringify(body),
       signal: controller.signal,
     });
 
