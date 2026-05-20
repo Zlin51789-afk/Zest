@@ -80,10 +80,10 @@ export async function checkOpenClawHealth() {
  */
 function openClawMaxTokens() {
   const n = parseInt(
-    process.env.OPENCLAW_MAX_TOKENS || process.env.MOONSHOT_MAX_TOKENS || '1024',
+    process.env.OPENCLAW_MAX_TOKENS || process.env.MOONSHOT_MAX_TOKENS || '768',
     10
   );
-  if (!Number.isFinite(n) || n < 64) return 1024;
+  if (!Number.isFinite(n) || n < 64) return 768;
   return Math.min(n, 8192);
 }
 

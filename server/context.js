@@ -374,6 +374,57 @@ export async function buildQaContext() {
   return value;
 }
 
+/** \u7528\u6237\u95ee\u53e5\u547d\u4e2d FAQ \u5173\u952e\u8bcd\u65f6\u76f4\u63a5\u8fd4\u56de\u7f51\u7ad9\u9884\u7f6e\u7b54\u6848\uff0c\u65e0\u9700\u8c03\u7528 LLM */
+export function matchFaqInstantAnswer(message, faq) {
+  const m = String(message || '').trim();
+  if (!m || !Array.isArray(faq)) return null;
+  let bestAnswer = null;
+  let bestScore = 0;
+  for (const item of faq) {
+    const kws = Array.isArray(item.keywords) ? item.keywords : [];
+    let score = 0;
+    for (const kw of kws) {
+      const k = String(kw || '').trim();
+      if (k && m.includes(k)) score += k.length;
+    }
+    if (score > bestScore && typeof item.answer === 'string' && item.answer.trim()) {
+      bestScore = score;
+      bestAnswer = item.answer.trim();
+    }
+  }
+  return bestAnswer;
+}
+
+/** \u8fdb\u5ea6 JSON \u683c\u5f0f\u7b26\u5408\u9884\u671f\u65f6\u672c\u5730\u6c47\u603b\uff0c\u8df3\u8fc7 LLM */
+export function formatProgressInstantFromJson(rawJson) {
+  if (!rawJson || typeof rawJson !== 'string') return null;
+  try {
+    const d = JSON.parse(rawJson);
+    const milestones = Array.isArray(d.milestones) ? d.milestones : [];
+    const icon = (s) => {
+      if (s === 'done') return '✓';
+      if (s === 'in_progress') return '◐';
+      return '○';
+    };
+    const lines = [
+      `**${d.project || '项目'}**`,
+      `当前阶段：${d.phase ?? '—'}`,
+      `整体进度：${typeof d.percent === 'number' ? `${d.percent}%` : '—'}`,
+      '',
+      '里程碑：',
+    ];
+    for (const ms of milestones) {
+      const name = ms.name != null ? String(ms.name) : '';
+      const date = ms.date != null ? `（${ms.date}）` : '';
+      lines.push(`${icon(ms.status)} ${name}${date}`.trim());
+    }
+    if (d.note) lines.push('', `备注：${d.note}`);
+    return lines.join('\n');
+  } catch {
+    return null;
+  }
+}
+
 export async function buildProgressContext(message) {
   const files = await fs.readdir(PROGRESS_DIR);
   const jsonFiles = files.filter((f) => f.endsWith('.json'));

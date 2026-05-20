@@ -45,6 +45,8 @@ npm run dev
 | 进度查询 | `web2:progress` | `data/progress/*.json` |
 | 其他功能 | `web2:general` | — |
 
+为降低首字延迟：**智能问答**在命中 `faq.json` 关键词时由服务端直接返回答案；**进度查询**在已匹配到项目 JSON 时由服务端格式化为摘要，上述路径均**不调用**大模型。其余问题仍走 Kimi / OpenClaw。
+
 ## 环境变量
 
 见 `.env.example`：`OPENCLAW_GATEWAY_URL`、`OPENCLAW_GATEWAY_TOKEN`、`OPENCLAW_MODEL`（默认 `openclaw/main`），以及直连 Moonshot 时的 `MOONSHOT_API_KEY` / `MOONSHOT_MODEL`。
@@ -52,7 +54,7 @@ npm run dev
 ### 加快回答（可选）
 
 - **`MOONSHOT_MODEL`**：在控制台选用延迟更低的模型（若账号支持），通常比盲目拉高 `max_tokens` 更有效。
-- **`MOONSHOT_MAX_TOKENS`**（默认 `1024`）：上限越低，生成越快，但超长答案可能被截断；需要长文时可调到 `1536`～`2048`。
+- **`MOONSHOT_MAX_TOKENS`**（默认 `768`）：上限越低通常越快；答案易被截断时可调到 `1024`～`2048`。
 - **`MOONSHOT_TEMPERATURE`**：默认**不传**，由 Moonshot 按模型使用合法默认值（部分 Kimi 模型仅允许 `1`，自行设小数会报错）。仅在官方文档要求时再在环境变量中设置。
-- **`MOONSHOT_MAX_ATTEMPTS`**：设为 `1` 可取消过载时的第二次重试，失败更快返回（成功率略降）。
+- **`MOONSHOT_MAX_ATTEMPTS`**：默认 **`1`**（过载时不二次请求，整体更快失败）；需要自动重试时可设为 **`2`**。
 - 走 OpenClaw 时可用 **`OPENCLAW_MAX_TOKENS`**；**`OPENCLAW_TEMPERATURE`** 未设置时也不会传 `temperature`（若需与网关模型对齐可再设）。

@@ -6,8 +6,10 @@ import {
   buildJfm9FolderCatalog,
   buildMatchedDocsCatalog,
   documentDownloadUrl,
+  formatProgressInstantFromJson,
   isJfm9FolderQuery,
   matchDocuments,
+  matchFaqInstantAnswer,
   SYSTEM_PROMPTS,
 } from './context.js';
 import { chatWithAI } from './llm.js';
@@ -22,7 +24,7 @@ const MAX_DOCS_FOR_LLM = 3;
 
 function toHistory(messages = []) {
   return messages
-    .slice(-10)
+    .slice(-8)
     .filter((m) => m.role === 'user' || m.role === 'assistant')
     .map((m) => ({
       role: m.role,
@@ -90,11 +92,21 @@ async function runOpenClawAgent(agentId, message, { history = [] } = {}) {
     }
     case 'qa': {
       const ctx = await buildQaContext();
+      const instant = matchFaqInstantAnswer(message, ctx.faq);
+      if (instant) {
+        return { text: instant, attachments: [] };
+      }
       systemPrompt = SYSTEM_PROMPTS.qa(ctx);
       break;
     }
     case 'progress': {
       const ctx = await buildProgressContext(message);
+      if (ctx.rawJson) {
+        const instant = formatProgressInstantFromJson(ctx.rawJson);
+        if (instant) {
+          return { text: instant, attachments: [] };
+        }
+      }
       systemPrompt = SYSTEM_PROMPTS.progress(ctx);
       break;
     }

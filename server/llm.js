@@ -36,8 +36,8 @@ function isMoonshotRetryable(status, apiMsgRaw) {
 }
 
 function moonshotMaxTokens() {
-  const n = parseInt(process.env.MOONSHOT_MAX_TOKENS || '1024', 10);
-  if (!Number.isFinite(n) || n < 64) return 1024;
+  const n = parseInt(process.env.MOONSHOT_MAX_TOKENS || '768', 10);
+  if (!Number.isFinite(n) || n < 64) return 768;
   return Math.min(n, 8192);
 }
 
@@ -77,7 +77,7 @@ async function chatWithMoonshot({
   const timer = setTimeout(() => controller.abort(), 90_000);
 
   const maxAttempts =
-    parseInt(process.env.MOONSHOT_MAX_ATTEMPTS ?? '2', 10) <= 1 ? 1 : 2;
+    parseInt(process.env.MOONSHOT_MAX_ATTEMPTS ?? '1', 10) >= 2 ? 2 : 1;
 
   try {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
