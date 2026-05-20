@@ -363,7 +363,12 @@ fileInput.addEventListener('change', async () => {
   updatePendingFilesUI();
 });
 
+let userMenuInitialized = false;
+
 function initUserMenu() {
+  if (userMenuInitialized) return;
+  userMenuInitialized = true;
+
   const btn = document.getElementById('userAvatarBtn');
   const menu = document.getElementById('userMenu');
   const logoutBtn = document.getElementById('logoutBtn');
