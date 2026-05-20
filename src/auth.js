@@ -50,13 +50,21 @@ export function initAuth(onSuccess) {
   const passInput = document.getElementById('loginPass');
 
   async function enterApp() {
+    const ok = await checkSession();
+    if (!ok) {
+      showLoginScreen();
+      errorEl.textContent = SESSION_ERROR;
+      errorEl.hidden = false;
+      return;
+    }
     showAppScreen();
     onSuccess();
   }
 
   async function tryRestoreSession() {
     if (await checkSession()) {
-      await enterApp();
+      showAppScreen();
+      onSuccess();
       return true;
     }
     showLoginScreen();

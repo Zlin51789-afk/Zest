@@ -13,6 +13,8 @@ export const AUTH_ACCOUNTS = {
 };
 
 export const AUTH_COOKIE = 'chipgo_session';
+const AUTH_SECRET =
+  process.env.AUTH_SECRET || 'chipgo-session-secret-change-in-production';
 
 const SESSION_FILE = process.env.VERCEL
   ? '/tmp/chipgo-active-session.json'
@@ -20,12 +22,23 @@ const SESSION_FILE = process.env.VERCEL
 
 let cachedSessions = null;
 
+function sign(payloadB64) {
+  return crypto
+    .createHmac('sha256', AUTH_SECRET)
+    .update(payloadB64)
+    .digest('base64url');
+}
+
+function normalizeUsers(data) {
+  if (data?.users && typeof data.users === 'object') return data;
+  return { users: {} };
+}
+
 async function loadSessions() {
   if (cachedSessions) return cachedSessions;
   try {
     const raw = await fs.readFile(SESSION_FILE, 'utf-8');
-    const data = JSON.parse(raw);
-    cachedSessions = data.users && typeof data.users === 'object' ? data : { users: {} };
+    cachedSessions = normalizeUsers(JSON.parse(raw));
     return cachedSessions;
   } catch {
     cachedSessions = { users: {} };
@@ -44,25 +57,52 @@ async function saveSessions(data) {
 }
 
 export function validateCredentials(username, password) {
-  if (!username || typeof password !== 'string') return false;
-  return AUTH_ACCOUNTS[username] === password;
+  const user = String(username ?? '').trim();
+  const pass = String(password ?? '');
+  if (!user || !pass) return false;
+  return AUTH_ACCOUNTS[user] === pass;
+}
+
+function createSignedToken(username, sid) {
+  const payload = JSON.stringify({ u: username, s: sid, t: Date.now() });
+  const payloadB64 = Buffer.from(payload).toString('base64url');
+  return `${payloadB64}.${sign(payloadB64)}`;
+}
+
+function parseSignedToken(token) {
+  if (!token || !token.includes('.')) return null;
+  const [payloadB64, sig] = token.split('.');
+  if (sign(payloadB64) !== sig) return null;
+  try {
+    const { u, s } = JSON.parse(Buffer.from(payloadB64, 'base64url').toString());
+    if (!u || !s) return null;
+    return { username: u, sid: s };
+  } catch {
+    return null;
+  }
 }
 
 export async function createLoginSession(username) {
-  const token = crypto.randomBytes(32).toString('hex');
+  const user = String(username).trim();
+  const sid = crypto.randomBytes(16).toString('hex');
   const data = await loadSessions();
-  data.users[username] = { token, createdAt: Date.now() };
+  data.users[user] = { sid, createdAt: Date.now() };
   await saveSessions(data);
-  return token;
+  return createSignedToken(user, sid);
 }
 
 export async function validateSessionToken(token) {
-  if (!token) return false;
+  const parsed = parseSignedToken(token);
+  if (!parsed) return false;
+
   const data = await loadSessions();
-  for (const sess of Object.values(data.users)) {
-    if (sess?.token === token) return true;
-  }
-  return false;
+  const active = data.users?.[parsed.username];
+
+  // ??????????? sid ???????
+  if (active) return active.sid === parsed.sid;
+
+  // ????Serverless ?????????????????
+  return true;
 }
 
 export function parseCookie(req, name) {
