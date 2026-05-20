@@ -42,6 +42,12 @@ let agents = [];
 let currentAgentId = null;
 let pendingFiles = [];
 
+/** \u8fdb\u884c\u4e2d\u7684\u804a\u5929\u8bf7\u6c42\uff08\u5207\u6362\u667a\u80fd\u4f53\u6216\u91cd\u65b0\u53d1\u9001\u65f6\u4e2d\u6b62\uff09 */
+let activeChatController = null;
+/** \u4e0e activeChatController \u5bf9\u5e94\u7684 agent\uff0c\u7528\u4e8e\u5207\u6362\u65f6\u64a4\u9500\u672a\u5b8c\u6210\u7684\u7528\u6237\u6d88\u606f */
+let pendingChatAgentId = null;
+let chatSendGeneration = 0;
+
 const $ = (sel) => document.querySelector(sel);
 
 const agentNav = $('#agentNav');
@@ -166,6 +172,22 @@ function renderAgentNav() {
 
 function switchAgent(agentId) {
   if (currentAgentId === agentId) return;
+
+  if (activeChatController && pendingChatAgentId) {
+    const sess = getSession(pendingChatAgentId);
+    const last = sess.messages[sess.messages.length - 1];
+    if (last?.role === 'user') {
+      sess.messages.pop();
+    }
+    try {
+      activeChatController.abort();
+    } catch {
+      /* ignore */
+    }
+    activeChatController = null;
+    pendingChatAgentId = null;
+  }
+
   currentAgentId = agentId;
 
   const agent = agents.find((a) => a.id === agentId);
@@ -203,10 +225,16 @@ function buildHistory(session) {
 }
 
 function formatChatError(err) {
-  const raw = err?.message ? String(err.message) : '未知错误';
+  let raw = err?.message ? String(err.message) : '未知错误';
   // 登录 / 会话失效（authFetch 抛出）不再套额外说明
   if (/登录|过期|失效|SESSION|设备|账号/i.test(raw)) {
     return raw;
+  }
+  // Kimi \u539f\u6587\u62a5\u9519\uff08\u672a\u90e8\u7f72\u65b0\u540e\u7aef\u65f6\u4ecd\u53ef\u80fd\u51fa\u73b0\uff09
+  if (
+    /overloaded|rate limit|try again later|\u7e41\u5fd9|\u9650\u6d41/i.test(raw)
+  ) {
+    return '暂时无法获取回复：Kimi（Moonshot）服务繁忙或限流，请稍后再试。';
   }
   const host = typeof window !== 'undefined' ? window.location.hostname : '';
   const isLocal = host === 'localhost' || host === '127.0.0.1';
@@ -217,11 +245,49 @@ function formatChatError(err) {
   return `暂时无法获取回复：${raw}`;
 }
 
+function isChatAbortError(err) {
+  const n = err?.name;
+  return n === 'AbortError' || n === 'TimeoutError';
+}
+
+function buildChatFetchSignal(userController) {
+  const u = userController.signal;
+  if (typeof AbortSignal === 'undefined' || typeof AbortSignal.timeout !== 'function') {
+    return u;
+  }
+  const t = AbortSignal.timeout(95_000);
+  if (typeof AbortSignal.any === 'function') {
+    return AbortSignal.any([u, t]);
+  }
+  return u;
+}
+
 async function sendMessage() {
   const text = messageInput.value.trim();
   if (!text || !currentAgentId) return;
 
-  const session = getSession(currentAgentId);
+  if (activeChatController) {
+    if (pendingChatAgentId === currentAgentId) {
+      const prevSess = getSession(currentAgentId);
+      const prevLast = prevSess.messages[prevSess.messages.length - 1];
+      if (prevLast?.role === 'user') {
+        prevSess.messages.pop();
+      }
+    }
+    try {
+      activeChatController.abort();
+    } catch {
+      /* ignore */
+    }
+    activeChatController = null;
+    pendingChatAgentId = null;
+  }
+
+  chatSendGeneration += 1;
+  const sendId = chatSendGeneration;
+  const agentIdForRequest = currentAgentId;
+  const session = getSession(agentIdForRequest);
+
   const userMsg = {
     role: 'user',
     text,
@@ -239,16 +305,32 @@ async function sendMessage() {
   const typingEl = showTyping();
   const history = buildHistory(session).slice(0, -1);
 
+  const userAc = new AbortController();
+  activeChatController = userAc;
+  pendingChatAgentId = agentIdForRequest;
+
+  let chatTimeoutId;
+  if (
+    typeof AbortSignal === 'undefined' ||
+    typeof AbortSignal.timeout !== 'function' ||
+    typeof AbortSignal.any !== 'function'
+  ) {
+    chatTimeoutId = setTimeout(() => {
+      try {
+        userAc.abort();
+      } catch {
+        /* ignore */
+      }
+    }, 95_000);
+  }
+
   try {
-    const chatSignal =
-      typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function'
-        ? AbortSignal.timeout(110_000)
-        : undefined;
-    const res = await authFetch(`/api/chat/${currentAgentId}`, {
+    const signal = buildChatFetchSignal(userAc);
+    const res = await authFetch(`/api/chat/${agentIdForRequest}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: text, history }),
-      ...(chatSignal ? { signal: chatSignal } : {}),
+      signal,
     });
 
     const data = await res.json().catch(() => ({}));
@@ -258,6 +340,10 @@ async function sendMessage() {
       throw new Error(parts.join('\n') || '\u8bf7\u6c42\u5931\u8d25');
     }
 
+    if (sendId !== chatSendGeneration) {
+      return;
+    }
+
     session.messages.push({
       role: 'assistant',
       text: data.text,
@@ -265,16 +351,41 @@ async function sendMessage() {
       timestamp: data.timestamp || Date.now(),
     });
   } catch (err) {
-    session.messages.push({
-      role: 'assistant',
-      text: formatChatError(err),
-      attachments: [],
-      timestamp: Date.now(),
-    });
-  }
+    if (sendId !== chatSendGeneration) {
+      return;
+    }
 
-  removeTyping(typingEl);
-  renderMessages(currentAgentId);
+    if (isChatAbortError(err)) {
+      const last = session.messages[session.messages.length - 1];
+      if (last?.role === 'user') {
+        session.messages.push({
+          role: 'assistant',
+          text:
+            '\u8bf7\u6c42\u8d85\u65f6\uff0890 \u79d2\uff09\u6216\u88ab\u4e2d\u65ad\u3002\u8bf7\u7f29\u77ed\u95ee\u9898\u6216\u7a0d\u540e\u518d\u8bd5\u3002',
+          attachments: [],
+          timestamp: Date.now(),
+        });
+      }
+    } else {
+      session.messages.push({
+        role: 'assistant',
+        text: formatChatError(err),
+        attachments: [],
+        timestamp: Date.now(),
+      });
+    }
+  } finally {
+    if (chatTimeoutId) clearTimeout(chatTimeoutId);
+    if (activeChatController === userAc) {
+      activeChatController = null;
+      pendingChatAgentId = null;
+    }
+    removeTyping(typingEl);
+    if (sendId === chatSendGeneration) {
+      sendBtn.disabled = !messageInput.value.trim();
+      renderMessages(currentAgentId);
+    }
+  }
 }
 
 async function refreshOpenClawStatus() {

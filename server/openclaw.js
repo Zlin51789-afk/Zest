@@ -4,7 +4,7 @@ import path from 'path';
 
 const DEFAULT_GATEWAY_URL = 'http://127.0.0.1:18789';
 const DEFAULT_MODEL = 'openclaw/main';
-const DEFAULT_TIMEOUT_MS = 120_000;
+const DEFAULT_TIMEOUT_MS = 90_000;
 
 let cachedConfig = null;
 
@@ -78,6 +78,23 @@ export async function checkOpenClawHealth() {
  * @param {Array<{role:'user'|'assistant', content: string}>} params.history
  * @param {string} params.message
  */
+function openClawMaxTokens() {
+  const n = parseInt(
+    process.env.OPENCLAW_MAX_TOKENS || process.env.MOONSHOT_MAX_TOKENS || '1024',
+    10
+  );
+  if (!Number.isFinite(n) || n < 64) return 1024;
+  return Math.min(n, 8192);
+}
+
+function openClawTemperature() {
+  const t = parseFloat(
+    process.env.OPENCLAW_TEMPERATURE || process.env.MOONSHOT_TEMPERATURE || '0.35'
+  );
+  if (!Number.isFinite(t)) return 0.35;
+  return Math.min(2, Math.max(0, t));
+}
+
 export async function chatWithOpenClaw({
   sessionUser,
   systemPrompt,
@@ -93,6 +110,9 @@ export async function chatWithOpenClaw({
       '未找到 OpenClaw Gateway Token。请设置 OPENCLAW_GATEWAY_TOKEN 或配置 ~/.openclaw/openclaw.json'
     );
   }
+
+  const maxTokens = openClawMaxTokens();
+  const temperature = openClawTemperature();
 
   const messages = [
     { role: 'system', content: systemPrompt },
@@ -117,6 +137,8 @@ export async function chatWithOpenClaw({
         user: sessionUser,
         messages,
         stream: false,
+        max_tokens: maxTokens,
+        temperature,
       }),
       signal: controller.signal,
     });

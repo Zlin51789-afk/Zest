@@ -36,6 +36,24 @@ const ROOT = path.join(__dirname, '..');
 const UPLOAD_DIR = path.join(ROOT, 'data/uploads');
 const DOCS_DIR = path.join(ROOT, 'data/documents');
 
+/** \u4e8c\u6b21\u63d0\u793a\uff1a\u8fc7\u8f7d/\u9650\u6d41\u4e0d\u8981\u8bef\u5bfc\u81f3\u300c\u672a\u914d\u5bc6\u94a5\u300d */
+function chatErrorHint(errMessage) {
+  const m = String(errMessage || '');
+  if (
+    /\u9650\u6d41|\u7e41\u5fd9|overloaded|rate limit|too many requests|try again later/i.test(
+      m
+    )
+  ) {
+    return undefined;
+  }
+  if (
+    /MOONSHOT_API_KEY|\u672a\u914d\u7f6e|401|Unauthorized|invalid api key/i.test(m)
+  ) {
+    return '\u82e5\u5728 Vercel \u90e8\u7f72\uff0c\u8bf7\u786e\u8ba4\u5df2\u914d\u7f6e MOONSHOT_API_KEY\uff08\u53ca\u53ef\u9009 MOONSHOT_MODEL\uff09\u5e76\u91cd\u65b0\u90e8\u7f72\u3002';
+  }
+  return '\u82e5\u6301\u7eed\u5931\u8d25\uff0c\u8bf7\u68c0\u67e5\u7f51\u7edc\u6216\u7a0d\u540e\u518d\u8bd5\u3002';
+}
+
 export async function createApp() {
   await fs.mkdir(UPLOAD_DIR, { recursive: true });
 
@@ -240,11 +258,13 @@ export async function createApp() {
       });
     } catch (err) {
       console.error('[openclaw]', err.message);
+      const errorMsg =
+        err.message ||
+        '\u804a\u5929\u670d\u52a1\u6682\u65f6\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002';
+      const hint = chatErrorHint(err.message);
       res.status(502).json({
-        error:
-          err.message ||
-          '\u804a\u5929\u670d\u52a1\u6682\u65f6\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002',
-        hint: '\u82e5\u5728 Vercel \u90e8\u7f72\uff0c\u8bf7\u786e\u8ba4\u5df2\u914d\u7f6e MOONSHOT_API_KEY\uff08\u53ca\u53ef\u9009 MOONSHOT_MODEL\uff09\u5e76\u91cd\u65b0\u90e8\u7f72\u3002',
+        error: errorMsg,
+        ...(hint ? { hint } : {}),
       });
     }
   });

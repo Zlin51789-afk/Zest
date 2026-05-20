@@ -22,7 +22,7 @@ const MAX_DOCS_FOR_LLM = 3;
 
 function toHistory(messages = []) {
   return messages
-    .slice(-16)
+    .slice(-10)
     .filter((m) => m.role === 'user' || m.role === 'assistant')
     .map((m) => ({
       role: m.role,

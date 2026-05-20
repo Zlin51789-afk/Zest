@@ -11,6 +11,39 @@ function useMoonshotDirect() {
   return false;
 }
 
+function moonshotUserFacingError(status, apiMsgRaw) {
+  const raw = typeof apiMsgRaw === 'string' ? apiMsgRaw.trim() : '';
+  const low = raw.toLowerCase();
+  if (
+    /overloaded|rate limit|too many requests|try again later/.test(low) ||
+    status === 429 ||
+    status === 503
+  ) {
+    return 'Kimi\uff08Moonshot\uff09\u670d\u52a1\u7e41\u5fd9\u6216\u9650\u6d41\uff0c\u8bf7\u7a0d\u540e\u518d\u8bd5\u3002';
+  }
+  if (raw) return raw;
+  return `\u6708\u4e4b\u6697\u9762 API \u8fd4\u56de ${status}\uff0c\u8bf7\u68c0\u67e5 MOONSHOT_API_KEY\u3001\u4f59\u989d\u53ca MOONSHOT_MODEL \u662f\u5426\u652f\u6301\u3002`;
+}
+
+function isMoonshotRetryable(status, apiMsgRaw) {
+  const low = String(apiMsgRaw || '').toLowerCase();
+  if (status === 429 || status === 503) return true;
+  if (/overloaded|rate limit|too many requests|try again later/.test(low)) return true;
+  return false;
+}
+
+function moonshotMaxTokens() {
+  const n = parseInt(process.env.MOONSHOT_MAX_TOKENS || '1024', 10);
+  if (!Number.isFinite(n) || n < 64) return 1024;
+  return Math.min(n, 8192);
+}
+
+function moonshotTemperature() {
+  const t = parseFloat(process.env.MOONSHOT_TEMPERATURE || '0.35');
+  if (!Number.isFinite(t)) return 0.35;
+  return Math.min(2, Math.max(0, t));
+}
+
 async function chatWithMoonshot({
   systemPrompt,
   history = [],
@@ -24,6 +57,8 @@ async function chatWithMoonshot({
   }
 
   const model = process.env.MOONSHOT_MODEL || 'kimi-k2.6';
+  const maxTokens = moonshotMaxTokens();
+  const temperature = moonshotTemperature();
   const messages = [
     { role: 'system', content: systemPrompt },
     ...history
@@ -33,44 +68,58 @@ async function chatWithMoonshot({
   ];
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 120_000);
+  const timer = setTimeout(() => controller.abort(), 90_000);
+
+  const maxAttempts =
+    parseInt(process.env.MOONSHOT_MAX_ATTEMPTS ?? '2', 10) <= 1 ? 1 : 2;
 
   try {
-    const res = await fetch(`${MOONSHOT_BASE}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        stream: false,
-      }),
-      signal: controller.signal,
-    });
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      if (attempt > 0) {
+        await new Promise((r) => setTimeout(r, 350 * attempt));
+      }
 
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
+      const res = await fetch(`${MOONSHOT_BASE}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          stream: false,
+          max_tokens: maxTokens,
+          temperature,
+        }),
+        signal: controller.signal,
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok) {
+        const text = data?.choices?.[0]?.message?.content?.trim();
+        if (!text) {
+          throw new Error(
+            '\u6708\u4e4b\u6697\u9762 API \u672a\u8fd4\u56de\u6587\u672c\u5185\u5bb9\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u6216\u6362\u4e2a\u6a21\u578b\u3002'
+          );
+        }
+        return text;
+      }
+
       const apiMsg =
         typeof data?.error?.message === 'string' ? data.error.message.trim() : '';
-      throw new Error(
-        apiMsg ||
-          `\u6708\u4e4b\u6697\u9762 API \u8fd4\u56de ${res.status}\uff0c\u8bf7\u68c0\u67e5 MOONSHOT_API_KEY \u662f\u5426\u6709\u6548\u3001\u8d26\u6237\u4f59\u989d\u53ca MOONSHOT_MODEL \u662f\u5426\u652f\u6301\u3002`
-      );
-    }
 
-    const text = data?.choices?.[0]?.message?.content?.trim();
-    if (!text) {
-      throw new Error(
-        '\u6708\u4e4b\u6697\u9762 API \u672a\u8fd4\u56de\u6587\u672c\u5185\u5bb9\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u6216\u6362\u4e2a\u6a21\u578b\u3002'
-      );
+      if (isMoonshotRetryable(res.status, apiMsg) && attempt < maxAttempts - 1) {
+        continue;
+      }
+
+      throw new Error(moonshotUserFacingError(res.status, apiMsg));
     }
-    return text;
   } catch (err) {
     if (err.name === 'AbortError') {
       throw new Error(
-        '\u8bf7\u6c42 Moonshot \u8d85\u65f6\uff08120 \u79d2\uff09\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002'
+        '\u8bf7\u6c42 Moonshot \u8d85\u65f6\uff0890 \u79d2\uff09\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u6216\u7f29\u77ed\u95ee\u9898\u3002'
       );
     }
     if (err instanceof Error && err.message && !err.message.startsWith('fetch')) {
