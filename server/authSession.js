@@ -123,10 +123,15 @@ export function cookieOptions() {
   const secure =
     process.env.VERCEL === '1' ||
     process.env.NODE_ENV === 'production';
-  return {
+  const opts = {
     httpOnly: true,
     secure,
     sameSite: 'lax',
     path: '/',
   };
+  // ?????chipgo.net ? www.chipgo.net ??????
+  if (secure) {
+    opts.domain = '.chipgo.net';
+  }
+  return opts;
 }
