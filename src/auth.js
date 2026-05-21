@@ -13,15 +13,8 @@ function userFacingApiError(data, fallback) {
   return fallback;
 }
 
-/**
- * www.chipgo.net \u4e0a\u66fe\u51fa\u73b0\u9996\u9875\u4ecd\u5728 www\u3001/api \u88ab\u91cd\u5b9a\u5411\u5230 chipgo.net \u7684\u60c5\u51b5\uff0c
- * \u8de8\u6e90 + \u51ed\u8bc1 fetch \u5728\u90e8\u5206\u6d4f\u89c8\u5668\u4e0b\u4f1a\u5bfc\u81f4\u767b\u5f55\u65e0\u53cd\u5e94\u3002\u7edf\u4e00\u8d70\u4e3b\u57df\u540d API\u3002
- */
+/** API 与当前页同域（chipgo.net / www.chipgo.net；Cookie 域 .chipgo.net） */
 export function resolveApiUrl(path) {
-  if (typeof window === 'undefined' || typeof path !== 'string') return path;
-  if (path.startsWith('/api') && window.location.hostname === 'www.chipgo.net') {
-    return `${window.location.protocol}//chipgo.net${path}`;
-  }
   return path;
 }
 
@@ -151,7 +144,7 @@ export function initAuth(onSuccess) {
       await clearServerSession();
       showLoginScreen();
       errorEl.textContent =
-        '\u767b\u5f55\u72b6\u6001\u6821\u9a8c\u5931\u8d25\u3002\u8bf7\u76f4\u63a5\u7528 https://chipgo.net \u6253\u5f00\uff08\u4e0d\u8981\u7528 www\uff09\uff0c\u6216\u5f3a\u5237\u65b0\u9875\u9762\u540e\u91cd\u8bd5\u3002\u82e5\u4ecd\u5931\u8d25\uff0c\u8bf7\u6e05\u9664\u672c\u7ad9\u6570\u636e\u4e0e Cookie \u540e\u518d\u767b\u5f55\u3002';
+        '\u767b\u5f55\u72b6\u6001\u6821\u9a8c\u5931\u8d25\u3002\u8bf7\u7528 https://chipgo.net \u6216 https://www.chipgo.net \u6253\u5f00\uff0c\u5e76\u5f3a\u5237\u65b0\u540e\u91cd\u8bd5\u3002\u82e5\u4ecd\u5931\u8d25\uff0c\u8bf7\u6e05\u9664\u672c\u7ad9 Cookie \u540e\u518d\u767b\u5f55\u3002';
       errorEl.hidden = false;
       return;
     }

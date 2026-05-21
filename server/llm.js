@@ -58,7 +58,7 @@ async function chatWithMoonshot({
   const apiKey = process.env.MOONSHOT_API_KEY;
   if (!apiKey) {
     throw new Error(
-      '\u672a\u914d\u7f6e MOONSHOT_API_KEY\u3002\u7ebf\u4e0a\u8bf7\u5728 Vercel \u2192 Project \u2192 Settings \u2192 Environment Variables \u4e2d\u6dfb\u52a0\u8be5\u53d8\u91cf\u5e76\u91cd\u65b0\u90e8\u7f72\u3002'
+      '\u672a\u914d\u7f6e MOONSHOT_API_KEY\u3002\u8bf7\u5728\u672c\u673a .env \u4e2d\u8bbe\u7f6e\u540e\u91cd\u542f\u670d\u52a1\u3002'
     );
   }
 

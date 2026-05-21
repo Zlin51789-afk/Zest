@@ -1,9 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { ACCOUNTS_FILE } from './paths.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ACCOUNTS_FILE = path.join(__dirname, '..', 'data', 'accounts.json');
 const OVERRIDE_FILE = process.env.VERCEL
   ? '/tmp/chipgo-accounts.json'
   : ACCOUNTS_FILE;

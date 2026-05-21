@@ -4,7 +4,6 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
-import { fileURLToPath } from 'url';
 import { AGENTS, handleAgent } from './agents.js';
 import {
   buildDocumentContext,
@@ -30,11 +29,8 @@ import {
   listAccountsPublic,
   updateAccount,
 } from './authAccounts.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.join(__dirname, '..');
-const UPLOAD_DIR = path.join(ROOT, 'data/uploads');
-const DOCS_DIR = path.join(ROOT, 'data/documents');
+import { DOCS_DIR, UPLOAD_DIR } from './paths.js';
+import { enforceAllowedHosts } from './allowedHosts.js';
 
 /** \u4e8c\u6b21\u63d0\u793a\uff1a\u8fc7\u8f7d/\u9650\u6d41\u4e0d\u8981\u8bef\u5bfc\u81f3\u300c\u672a\u914d\u5bc6\u94a5\u300d */
 function chatErrorHint(errMessage) {
@@ -52,7 +48,7 @@ function chatErrorHint(errMessage) {
   if (
     /MOONSHOT_API_KEY|\u672a\u914d\u7f6e|401|Unauthorized|invalid api key/i.test(m)
   ) {
-    return '\u82e5\u5728 Vercel \u90e8\u7f72\uff0c\u8bf7\u786e\u8ba4\u5df2\u914d\u7f6e MOONSHOT_API_KEY\uff08\u53ca\u53ef\u9009 MOONSHOT_MODEL\uff09\u5e76\u91cd\u65b0\u90e8\u7f72\u3002';
+    return '\u8bf7\u5728 .env \u4e2d\u914d\u7f6e MOONSHOT_API_KEY\uff08\u53ca\u53ef\u9009 MOONSHOT_MODEL\uff09\u540e\u91cd\u542f\u672c\u673a\u670d\u52a1\u3002';
   }
   return '\u82e5\u6301\u7eed\u5931\u8d25\uff0c\u8bf7\u68c0\u67e5\u7f51\u7edc\u6216\u7a0d\u540e\u518d\u8bd5\u3002';
 }
@@ -62,6 +58,7 @@ export async function createApp() {
 
   const app = express();
   app.set('trust proxy', 1);
+  app.use(enforceAllowedHosts);
   const upload = multer({ dest: UPLOAD_DIR });
 
   app.use(cors({ origin: true, credentials: true }));
@@ -146,7 +143,8 @@ export async function createApp() {
     if (
       req.path === '/api/auth/login' ||
       req.path === '/api/auth/session' ||
-      req.path === '/api/auth/logout'
+      req.path === '/api/auth/logout' ||
+      req.path === '/api/openclaw/status'
     ) {
       return next();
     }

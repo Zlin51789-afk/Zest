@@ -1,0 +1,12 @@
+# 复制到 ~/.cloudflared/config.yml 并替换 <TUNNEL_ID>
+# 创建隧道: cloudflared tunnel create chipgo-home
+
+tunnel: chipgo-home
+credentials-file: /Users/a1111/.cloudflared/<TUNNEL_ID>.json
+
+ingress:
+  - hostname: chipgo.net
+    service: http://127.0.0.1:80
+  - hostname: www.chipgo.net
+    service: http://127.0.0.1:80
+  - service: http_status:404

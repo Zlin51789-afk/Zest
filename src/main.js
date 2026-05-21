@@ -1,4 +1,4 @@
-import { authFetch, initAuth, logout } from './auth.js';
+import { authFetch, initAuth, logout, resolveApiUrl } from './auth.js';
 
 const ICONS = {
   document: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15h6"/></svg>`,
@@ -397,9 +397,20 @@ async function refreshOpenClawStatus() {
   if (!footer || !textEl) return;
 
   try {
-    const res = await authFetch('/api/openclaw/status');
-    const data = await res.json();
+    const res = await fetch(resolveApiUrl('/api/openclaw/status'), {
+      credentials: 'include',
+    });
+    const data = await res.json().catch(() => ({}));
     footer.classList.remove('connected', 'error');
+
+    if (!res.ok) {
+      footer.classList.add('error');
+      textEl.textContent =
+        res.status >= 500
+          ? '网站服务异常，请稍后刷新'
+          : '无法获取 AI 状态';
+      return;
+    }
 
     if (data.ok) {
       footer.classList.add('connected');
@@ -413,7 +424,12 @@ async function refreshOpenClawStatus() {
     }
   } catch {
     footer.classList.add('error');
-    textEl.textContent = '后端服务未启动';
+    const host = window.location.hostname;
+    const onDev =
+      host === 'localhost' || host === '127.0.0.1' || window.location.port === '5173';
+    textEl.textContent = onDev
+      ? '无法连接后端（开发页请先运行 npm run public 或 serve:local）'
+      : '无法连接网站服务，请确认 Mac 上网站与隧道已启动';
   }
 }
 

@@ -2,16 +2,13 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <!-- 在模块 JS 加载前将 www 跳到主域 chipgo.net，避免跨子域导致登录 Cookie 无法随请求发送 -->
+    <!-- 仅允许 chipgo.net / www.chipgo.net；其它地址（IP、localhost 等）跳到主站 -->
     <script>
       (function () {
-        if (location.hostname !== 'www.chipgo.net') return;
+        var h = location.hostname.toLowerCase();
+        if (h === 'chipgo.net' || h === 'www.chipgo.net') return;
         location.replace(
-          location.protocol +
-            '//chipgo.net' +
-            location.pathname +
-            location.search +
-            location.hash
+          'https://chipgo.net' + location.pathname + location.search + location.hash
         );
       })();
     </script>

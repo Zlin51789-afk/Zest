@@ -1,0 +1,39 @@
+【已自动完成 ✓】
+✓ Cloudflare 已登录（~/.cloudflared/cert.pem）
+✓ 隧道 chipgo-home 已创建并在运行（2 条连接）
+✓ 本机网站 http://127.0.0.1:8080 正常
+✓ 数据在 ~/chipgo-private
+
+【还需你手动 2 步（我无法代替登录聚名网网页）】
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+① Cloudflare 里删掉旧 DNS 记录
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+打开 https://dash.cloudflare.com → 选 chipgo.net → DNS → 记录
+
+删除 chipgo.net 和 www 上所有旧的 A / AAAA / CNAME（含指向 Vercel 的）。
+
+然后在终端执行：
+  cd /Users/a1111/Documents/cursor/web2
+  npm run fix:dns
+
+（按提示删完记录后回车，会把域名指到隧道）
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+② 聚名网：域名服务器改到 Cloudflare
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+当前公网查询仍是：ns1.vercel-dns.com（还没改对）
+
+聚名网 → chipgo.net → 域名服务器 → 改成 Cloudflare 给你的两个 NS
+（在 Cloudflare 站点概览页能看到）
+
+生效后执行：dig @8.8.8.8 +short chipgo.net NS
+应出现 cloudflare.com，而不是 vercel-dns.com
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+日常：Mac 开机后执行（两个进程已在后台时可省略）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+终端 A：node --env-file=.env server/serve-local.js
+终端 B：cloudflared tunnel run chipgo-home
+
+访问：https://chipgo.net

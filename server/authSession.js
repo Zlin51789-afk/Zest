@@ -84,6 +84,7 @@ export function getSessionTokenFromRequest(req) {
 export function cookieOptions(req) {
   const secure =
     process.env.VERCEL === '1' ||
+    process.env.PUBLIC_HTTPS === '1' ||
     process.env.NODE_ENV === 'production';
   const opts = {
     httpOnly: true,

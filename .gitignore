@@ -2,8 +2,22 @@ node_modules/
 dist/
 .env
 .vercel
+api/
+vercel.json
+scripts/一键部署.sh
+# 全部业务数据只放本机 ~/chipgo-private（见 npm run setup:local）
+data/documents/**
+data/knowledge/**
+data/progress/**
 data/uploads/*
+data/accounts.json
+data/accounts.local.json
 data/active-session.json
-!.gitkeep
+!data/documents/README.md
+!data/documents/JFM9系列FPGA/README.md
+!data/knowledge/.gitkeep
+!data/progress/.gitkeep
+!data/uploads/.gitkeep
+!data/accounts.local.json.example
 .DS_Store
 **/.DS_Store

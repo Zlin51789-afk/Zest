@@ -30,6 +30,10 @@ npm run dev
 
 浏览器打开 http://localhost:5173（API 代理至 3001，再转发至 OpenClaw `18789`）。
 
+### 只用本机（不用 Vercel / 隐私不上 GitHub）
+
+见 **[docs/只用本机.md](docs/只用本机.md)**（仅本机）或 **[docs/公网部署-本机当服务器.md](docs/公网部署-本机当服务器.md)**（**公网 chipgo.net 都走你这台 Mac**）。数据在 `~/chipgo-private/`；公网用 `npm run public` + Cloudflare Tunnel 或路由器端口转发。
+
 ## 架构
 
 ```

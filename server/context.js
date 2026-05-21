@@ -1,12 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.join(__dirname, '..');
-const DOCS_DIR = path.join(ROOT, 'data/documents');
-const KNOWLEDGE_PATH = path.join(ROOT, 'data/knowledge/faq.json');
-const PROGRESS_DIR = path.join(ROOT, 'data/progress');
+import { DOCS_DIR, KNOWLEDGE_PATH, PROGRESS_DIR } from './paths.js';
 
 const DOCS_CTX_TTL_MS = 45_000;
 let docsCtxCache = { expires: 0, value: null };
